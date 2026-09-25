@@ -1,0 +1,18 @@
+{
+  "item.lootroulette.loot_debug_stick": "战利品箱调试棒",
+  "rarity.lootroulette.common": "普通",
+  "rarity.lootroulette.rare": "稀有",
+  "rarity.lootroulette.epic": "史诗",
+  "rarity.lootroulette.legendary": "传说",
+  "rarity.lootroulette.mythic": "绝世",
+  "screen.lootroulette.title": "战利品抽奖",
+  "screen.lootroulette.rolling": "抽取中……不可跳过",
+  "screen.lootroulette.opening": "抽取完成，正在打开容器……",
+  "message.lootroulette.selected": "调试棒稀有度：%s",
+  "message.lootroulette.reset": "已重置战利品箱并设为：%s",
+  "message.lootroulette.busy": "这个战利品箱正在抽取中",
+  "message.lootroulette.rolling_locked": "抽取完成前不能破坏这个战利品箱",
+  "message.lootroulette.not_loot_container": "目标不是战利品容器",
+  "message.lootroulette.no_original_table": "目标没有可恢复的原始战利品表",
+  "message.lootroulette.empty_table": "该战利品表没有生成任何物品"
+}

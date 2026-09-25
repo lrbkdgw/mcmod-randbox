@@ -1,0 +1,55 @@
+plugins {
+    id 'idea'
+    id 'java-library'
+    id 'maven-publish'
+    id 'net.neoforged.moddev.legacyforge' version '2.0.91'
+}
+
+version = mod_version
+group = mod_group_id
+base { archivesName = mod_id }
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+
+repositories { mavenLocal() }
+
+legacyForge {
+    // 1.20.1 is NeoForge's compatibility-era artifact (net.neoforged:forge).
+    enable {
+        neoForgeVersion = project.minecraft_version + '-' + project.neo_version
+    }
+    parchment {
+        mappingsVersion = project.parchment_mappings_version
+        minecraftVersion = project.parchment_minecraft_version
+    }
+    runs {
+        client { client() }
+        server { server(); programArgument '--nogui' }
+        configureEach {
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+            logLevel = org.slf4j.event.Level.INFO
+        }
+    }
+    mods { "${mod_id}" { sourceSet(sourceSets.main) } }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 17
+}
+
+var generateModMetadata = tasks.register('generateModMetadata', ProcessResources) {
+    var props = [minecraft_version: minecraft_version,
+                 minecraft_version_range: minecraft_version_range,
+                 neo_version: neo_version,
+                 neo_version_range: neo_version_range,
+                 loader_version_range: loader_version_range,
+                 mod_id: mod_id, mod_name: mod_name, mod_license: mod_license,
+                 mod_version: mod_version, mod_authors: mod_authors,
+                 mod_description: mod_description]
+    inputs.properties props
+    expand props
+    from 'src/main/templates'
+    into 'build/generated/sources/modMetadata'
+}
+sourceSets.main.resources.srcDir generateModMetadata
+legacyForge.ideSyncTask generateModMetadata

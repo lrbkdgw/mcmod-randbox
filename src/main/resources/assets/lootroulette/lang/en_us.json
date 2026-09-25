@@ -1,0 +1,18 @@
+{
+  "item.lootroulette.loot_debug_stick": "Loot Container Debug Stick",
+  "rarity.lootroulette.common": "Common",
+  "rarity.lootroulette.rare": "Rare",
+  "rarity.lootroulette.epic": "Epic",
+  "rarity.lootroulette.legendary": "Legendary",
+  "rarity.lootroulette.mythic": "Mythic",
+  "screen.lootroulette.title": "Loot Roulette",
+  "screen.lootroulette.rolling": "Rolling... cannot be skipped",
+  "screen.lootroulette.opening": "Roll complete — opening container...",
+  "message.lootroulette.selected": "Debug-stick rarity: %s",
+  "message.lootroulette.reset": "Loot container reset to: %s",
+  "message.lootroulette.busy": "This loot container is already rolling",
+  "message.lootroulette.rolling_locked": "This loot container cannot be broken while rolling",
+  "message.lootroulette.not_loot_container": "The target is not a loot container",
+  "message.lootroulette.no_original_table": "The target has no original loot table to restore",
+  "message.lootroulette.empty_table": "This loot table generated no items"
+}
