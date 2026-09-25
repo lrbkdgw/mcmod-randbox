@@ -6,8 +6,8 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.Util;
 import net.minecraft.util.Mth;
-import net.minecraft.util.Util;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
