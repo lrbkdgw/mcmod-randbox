@@ -1,0 +1,9 @@
+build/
+run/
+run-data/
+.gradle/
+src/generated/
+*.class
+.idea/
+*.iml
+.eclipse/

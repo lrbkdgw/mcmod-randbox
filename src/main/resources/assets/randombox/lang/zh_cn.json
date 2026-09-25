@@ -1,0 +1,33 @@
+{
+  "randombox.rarity.common": "普通",
+  "randombox.rarity.rare": "稀有",
+  "randombox.rarity.epic": "史诗",
+  "randombox.rarity.legendary": "传说",
+  "randombox.rarity.mythic": "绝世",
+
+  "randombox.screen.reel": "宝箱抽奖",
+  "randombox.screen.title": "%s 宝箱",
+  "randombox.screen.no_skip": "抽奖过程不可跳过",
+  "randombox.screen.editor": "战利品表编辑器",
+
+  "randombox.message.busy": "这个宝箱正在被开启。",
+  "randombox.message.result": "%s 宝箱已开启：%s 件物品",
+
+  "randombox.editor.tables": "战利品表",
+  "randombox.editor.new_id": "新战利品表 ID",
+  "randombox.editor.create": "新建",
+  "randombox.editor.import": "导入",
+  "randombox.editor.add_entry": "添加物品",
+  "randombox.editor.save": "保存",
+  "randombox.editor.delete": "删除",
+  "randombox.editor.rolls": "抽取次数",
+  "randombox.editor.header": "物品 / 权重 / 品质 / 最小 / 最大",
+  "randombox.editor.hint": "在左侧选择一个战利品表，或新建 / 导入一个。",
+  "randombox.editor.available": "服务器共有 %s 个战利品表",
+  "randombox.editor.saved": "战利品表 %s 已保存。",
+  "randombox.editor.deleted": "战利品表 %s 已删除。",
+
+  "randombox.command.created": "已在 %s 创建 %s 宝箱，战利品表：%s",
+  "randombox.command.failed": "无法在该位置创建宝箱。",
+  "randombox.command.player_only": "该指令只能由玩家使用。"
+}

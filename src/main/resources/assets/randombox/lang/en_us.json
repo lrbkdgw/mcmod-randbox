@@ -1,0 +1,33 @@
+{
+  "randombox.rarity.common": "Common",
+  "randombox.rarity.rare": "Rare",
+  "randombox.rarity.epic": "Epic",
+  "randombox.rarity.legendary": "Legendary",
+  "randombox.rarity.mythic": "Peerless",
+
+  "randombox.screen.reel": "Box Lottery",
+  "randombox.screen.title": "%s Box",
+  "randombox.screen.no_skip": "The draw cannot be skipped",
+  "randombox.screen.editor": "Loot Table Editor",
+
+  "randombox.message.busy": "This box is already being opened.",
+  "randombox.message.result": "%s box opened: %s items",
+
+  "randombox.editor.tables": "Loot tables",
+  "randombox.editor.new_id": "New table id",
+  "randombox.editor.create": "Create",
+  "randombox.editor.import": "Import",
+  "randombox.editor.add_entry": "Add entry",
+  "randombox.editor.save": "Save",
+  "randombox.editor.delete": "Delete",
+  "randombox.editor.rolls": "Rolls",
+  "randombox.editor.header": "item / weight / quality / min / max",
+  "randombox.editor.hint": "Select a table on the left, or create / import one.",
+  "randombox.editor.available": "%s loot tables available on the server",
+  "randombox.editor.saved": "Loot table %s saved.",
+  "randombox.editor.deleted": "Loot table %s deleted.",
+
+  "randombox.command.created": "Box created at %s (%s) with loot table %s",
+  "randombox.command.failed": "Could not create the box at this position.",
+  "randombox.command.player_only": "This command can only be used by a player."
+}
