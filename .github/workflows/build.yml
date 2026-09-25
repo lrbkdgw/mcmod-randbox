@@ -17,7 +17,17 @@ jobs:
           java-version: '17'
       - uses: gradle/actions/setup-gradle@v4
       - name: Build mod
-        run: ./gradlew build --stacktrace
+        shell: bash
+        run: |
+          set +e
+          ./gradlew build --stacktrace > build.log 2>&1
+          code=$?
+          cat build.log
+          if [ $code -ne 0 ]; then
+            message=$(tail -c 50000 build.log | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g')
+            echo "::error title=Gradle build failed::$message"
+          fi
+          exit $code
       - uses: actions/upload-artifact@v4
         with:
           name: lootroulette-1.20.1
