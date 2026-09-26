@@ -1,0 +1,117 @@
+
+Welcome to Gradle 8.8!
+
+Here are the highlights of this release:
+ - Running Gradle on Java 22
+ - Configurable Gradle daemon JVM
+ - Improved IDE performance for large projects
+
+For more details see https://docs.gradle.org/8.8/release-notes.html
+
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.8/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Task :createMinecraftArtifacts
+Loaded 119 artifacts from /home/runner/work/mcmod-randbox/mcmod-randbox/build/tmp/createMinecraftArtifacts/nfrt_artifact_manifest.properties
+  [33mWARNING: [0mde.oceanlabs.mcp:mcp_config:1.20.1-20230612.114412@zip is not present in the artifact manifest
+  ↓ https://maven.neoforged.net/releases/de/oceanlabs/mcp/mcp_config/1.20.1-20230612.114412/mcp_config-1.20.1-20230612.114412.zip
+[1m*** Started working on [4mdownloadJson[0m[0m
+  ↓ https://launchermeta.mojang.com/mc/game/version_manifest_v2.json
+  ↓ https://piston-meta.mojang.com/v1/packages/2492c9d294776667e63b56a73a611ae327948de2/1.20.1.json
+ [1m[92m✓[0m Completed [4mdownloadJson[0m in 0.17s
+[1m*** Started working on [4mdownloadClient[0m[0m
+[1m*** Started working on [4mdownloadServer[0m[0m
+[1m*** Started working on [4mdownloadClientMappings[0m[0m
+[1m*** Started working on [4mlistLibraries[0m[0m
+  ↓ https://piston-data.mojang.com/v1/objects/0c3ec587af28e5a785c0b4a7b8a30f9a8f78f838/client.jar
+  ↓ https://piston-data.mojang.com/v1/objects/84194a2f286ef7c14ed7ce0090dba59902951553/server.jar
+  [33mWARNING: [0mnet.minecraftforge:mergetool:1.1.7:api is not present in the artifact manifest
+  ↓ https://maven.neoforged.net/releases/net/minecraftforge/mergetool/1.1.7/mergetool-1.1.7-api.jar
+  ↓ https://piston-data.mojang.com/v1/objects/6c48521eed01fe2e8ecdadbd5ae348415f3c47da/client.txt
+  [33mWARNING: [0morg.jetbrains:annotations:24.0.1 is not present in the artifact manifest
+  ↓ https://maven.neoforged.net/releases/org/jetbrains/annotations/24.0.1/annotations-24.0.1.jar
+ [1m[92m✓[0m Completed [4mlistLibraries[0m in 0.11s
+ [1m[92m✓[0m Completed [4mdownloadClientMappings[0m in 0.40s
+[1m*** Started working on [4mmergeMappings[0m[0m
+  [33mWARNING: [0mnet.minecraftforge:installertools:1.2.0:fatjar is not present in the artifact manifest
+  ↓ https://maven.minecraftforge.net/net/minecraftforge/installertools/1.2.0/installertools-1.2.0-fatjar.jar
+ ↳ Running external tool net.minecraftforge:installertools:1.2.0:fatjar
+ [1m[92m✓[0m Completed [4mdownloadClient[0m in 0.88s
+[1m*** Started working on [4mstripClient[0m[0m
+ [1m[92m✓[0m Completed [4mdownloadServer[0m in 1.36s
+[1m*** Started working on [4mextractServer[0m[0m
+  [33mWARNING: [0mnet.minecraftforge:installertools:1.3.2:fatjar is not present in the artifact manifest
+  ↓ https://maven.minecraftforge.net/net/minecraftforge/installertools/1.3.2/installertools-1.3.2-fatjar.jar
+ ↳ Running external tool net.minecraftforge:installertools:1.3.2:fatjar
+ [1m[92m✓[0m Completed [4mextractServer[0m in 1.01s
+[1m*** Started working on [4mstripServer[0m[0m
+ [1m[92m✓[0m Completed [4mstripClient[0m in 3.81s
+ [1m[92m✓[0m Completed [4mmergeMappings[0m in 4.46s
+ [1m[92m✓[0m Completed [4mstripServer[0m in 2.31s
+[1m*** Started working on [4mcreateMappings[0m[0m
+[1m*** Started working on [4mmerge[0m[0m
+ ↳ Running external tool net.minecraftforge:mergetool:1.1.7:fatjar
+ [1m[92m✓[0m Completed [4mcreateMappings[0m in 4.89s
+ [1m[92m✓[0m Completed [4mmerge[0m in 5.32s
+[1m*** Started working on [4mrename[0m[0m
+  [33mWARNING: [0mnet.minecraftforge:ForgeAutoRenamingTool:1.0.2:all is not present in the artifact manifest
+  ↓ https://maven.minecraftforge.net/net/minecraftforge/ForgeAutoRenamingTool/1.0.2/ForgeAutoRenamingTool-1.0.2-all.jar
+ ↳ Running external tool net.minecraftforge:ForgeAutoRenamingTool:1.0.2:all
+ [1m[92m✓[0m Completed [4mrename[0m in 6.60s
+[1m*** Started working on [4mstripSideAnnotations[0m[0m
+ ↳ Running external tool net.minecraftforge:mergetool:1.1.7:fatjar
+ [1m[92m✓[0m Completed [4mstripSideAnnotations[0m in 2.55s
+[1m*** Started working on [4mdecompile[0m[0m
+  [33mWARNING: [0mnet.minecraftforge:forgeflower:2.0.629.0 is not present in the artifact manifest
+  ↓ https://maven.minecraftforge.net/net/minecraftforge/forgeflower/2.0.629.0/forgeflower-2.0.629.0.jar
+ ↳ Running external tool net.minecraftforge:forgeflower:2.0.629.0
+ [1m[92m✓[0m Completed [4mdecompile[0m in 84.52s
+[1m*** Started working on [4minject[0m[0m
+ [1m[92m✓[0m Completed [4minject[0m in 3.33s
+[1m*** Started working on [4mpatch[0m[0m
+ ↳ Running external tool io.codechicken:DiffPatch:2.0.0.36:all
+ [1m[92m✓[0m Completed [4mpatch[0m in 2.94s
+[1m*** Started working on [4mapplyNeoforgePatches[0m[0m
+ ↳ Running external tool io.codechicken:DiffPatch:2.0.0.36:all
+ [1m[92m✓[0m Completed [4mapplyNeoforgePatches[0m in 2.34s
+[1m*** Started working on [4mtransformSources[0m[0m
+ ↳ Running external tool net.neoforged.jst:jst-cli-bundle:1.0.72
+ [1m[92m✓[0m Completed [4mtransformSources[0m in 7.70s
+[1m*** Started working on [4mremapSrgSourcesToOfficial[0m[0m
+ [1m[92m✓[0m Completed [4mremapSrgSourcesToOfficial[0m in 2.59s
+[1m*** Started working on [4mapplyParchment[0m[0m
+ ↳ Running external tool net.neoforged.jst:jst-cli-bundle:1.0.72
+ [1m[92m✓[0m Completed [4mapplyParchment[0m in 16.89s
+[1m*** Started working on [4mrecompile[0m[0m
+  [33mWARNING: [0mnet.minecraftforge:mergetool:1.1.7:api is not present in the artifact manifest
+  [33mWARNING: [0morg.jetbrains:annotations:24.0.1 is not present in the artifact manifest
+ 96 items on the compile classpath
+ 0 items on the sourcepath
+ Compiling 5441 source files
+Copied 1259 resource files
+ [1m[92m✓[0m Completed [4mrecompile[0m in 34.75s
+[1m*** Started working on [4msourcesAndCompiledWithNeoForge[0m[0m
+ [1m[92m✓[0m Completed [4msourcesAndCompiledWithNeoForge[0m in 2.37s
+Total runtime: 178.44s
+
+
+> Task :compileJava
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+
+> Task :processResources
+> Task :classes
+> Task :jarJar NO-SOURCE
+> Task :jar
+> Task :reobfJar
+> Task :assemble
+> Task :compileTestJava NO-SOURCE
+> Task :processTestResources NO-SOURCE
+> Task :testClasses UP-TO-DATE
+> Task :test NO-SOURCE
+> Task :check UP-TO-DATE
+> Task :build
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/build-1790408510357.json
+
+BUILD SUCCESSFUL in 3m 46s
+5 actionable tasks: 5 executed

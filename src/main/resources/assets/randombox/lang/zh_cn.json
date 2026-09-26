@@ -1,0 +1,48 @@
+{
+  "randombox.rarity.common": "普通",
+  "randombox.rarity.rare": "稀有",
+  "randombox.rarity.epic": "史诗",
+  "randombox.rarity.legendary": "传说",
+  "randombox.rarity.mythic": "绝世",
+
+  "randombox.screen.reel": "宝箱抽奖",
+  "randombox.screen.title": "%s 宝箱",
+  "randombox.screen.no_skip": "抽奖过程不可跳过，ESC 取消本次抽奖",
+  "randombox.screen.creative_skip": "创造模式：空格跳过抽奖，ESC 取消",
+  "randombox.screen.editor": "战利品表编辑器",
+
+  "randombox.message.busy": "这个宝箱正在被开启。",
+  "randombox.message.result": "%s 宝箱已开启：%s 件物品",
+
+  "randombox.message.cancelled": "已取消抽奖，宝箱保持未开启",
+
+  "randombox.editor.tables": "战利品表",
+  "randombox.editor.new_id": "新战利品表 ID",
+  "randombox.editor.create": "新建",
+  "randombox.editor.import": "导入",
+  "randombox.editor.add_entry": "添加物品",
+  "randombox.editor.save": "保存",
+  "randombox.editor.delete": "删除",
+  "randombox.editor.rolls": "抽取次数",
+  "randombox.editor.header": "物品 / 权重 / 品质 / 最小 / 最大",
+  "randombox.editor.header_locked": "物品 / 权重 / 品质（固定值） / 最小 / 最大",
+  "randombox.editor.hint": "在左侧选择一个战利品表，或新建 / 导入一个。",
+  "randombox.editor.available": "列出 %s 个战利品表",
+  "randombox.editor.search": "搜索",
+  "randombox.editor.close": "关闭",
+  "randombox.editor.loaded": "正在编辑 %s",
+  "randombox.editor.importing": "正在载入 %s ……",
+  "randombox.editor.created": "已新建 %s，点击「保存」写入服务器",
+  "randombox.editor.need_id": "请先填写 ID",
+  "randombox.editor.bad_id": "非法 ID：%s",
+  "randombox.editor.no_permission": "需要 2 级权限才能编辑战利品表。",
+  "randombox.editor.saved": "战利品表 %s 已保存。",
+  "randombox.editor.deleted": "战利品表 %s 已删除。",
+
+  "randombox.command.unknown_item": "未知物品。",
+  "randombox.command.quality_get": "%s 的 Quality：%s",
+  "randombox.command.quality_set": "已把 %s 的 Quality 设为 %s",
+  "randombox.command.created": "已在 %s 创建 %s 宝箱，战利品表：%s",
+  "randombox.command.failed": "无法在该位置创建宝箱。",
+  "randombox.command.player_only": "该指令只能由玩家使用。"
+}
