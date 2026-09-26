@@ -10,6 +10,7 @@ import com.randombox.RandomBoxMod;
 import com.randombox.Rarity;
 import com.randombox.config.RBConfig;
 import com.randombox.data.BoxData;
+import com.randombox.enchantment.RandomBoxEnchantments;
 import com.randombox.data.BoxSavedData;
 import com.randombox.loot.LootRoller;
 import com.randombox.net.RBNetwork;
@@ -81,7 +82,7 @@ public final class ReelManager {
         RandomSource random = level.getRandom();
         BoxData data = saved.getOrCreate(pos, tableId, random);
         data.setLootTable(tableId);
-        Rarity rarity = data.rarity();
+        Rarity rarity = RandomBoxEnchantments.maybeAscend(data.rarity(), player, random);
 
         LootRoller.Result rolled = LootRoller.roll(level, pos, player, tableId, rarity);
         if (rolled.prizes.isEmpty()) {
@@ -90,10 +91,11 @@ public final class ReelManager {
 
         List<Float> durations = new ArrayList<>();
         float total = 0.0F;
+        float timeMultiplier = RandomBoxEnchantments.openingTimeMultiplier(player);
         for (int i = 0; i < rolled.prizes.size(); i++) {
             float spread = RBConfig.timeSpread();
             float factor = 1.0F + (random.nextFloat() * 2.0F - 1.0F) * spread;
-            float seconds = Math.max(0.1F, RBConfig.secondsPerItem() * factor);
+            float seconds = Math.max(0.1F, RBConfig.secondsPerItem() * factor * timeMultiplier);
             total += seconds;
             durations.add(seconds);
         }
@@ -184,6 +186,7 @@ public final class ReelManager {
             level.sendBlockUpdated(partPos, partState, partState, 3);
             BoxData data = saved.get(partPos);
             if (data != null) {
+                data.setRarity(pending.rarity);
                 data.setOpened(true);
                 saved.setDirty();
             }

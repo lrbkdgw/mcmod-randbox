@@ -2,8 +2,6 @@ package com.randombox.client;
 
 import java.util.List;
 
-import org.lwjgl.glfw.GLFW;
-
 import com.randombox.Rarity;
 import com.randombox.net.CancelReelPacket;
 import com.randombox.net.RBNetwork;
@@ -22,6 +20,8 @@ import net.minecraft.world.item.ItemStack;
  * item inside the white frame is the prize.
  */
 public class ReelScreen extends Screen {
+    private static final int KEY_ESCAPE = 256;
+    private static final int KEY_SPACE = 32;
     private static final int SLOT = 18;
     private static final int CELL = 26;
     private static final int VISIBLE_ROWS = 9;
@@ -118,12 +118,12 @@ public class ReelScreen extends Screen {
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+        if (keyCode == KEY_ESCAPE) {
             // Esc aborts the whole draw: no prizes, the box stays closed.
             this.cancel();
             return true;
         }
-        if (keyCode == GLFW.GLFW_KEY_SPACE && this.canSkip()) {
+        if (keyCode == KEY_SPACE && this.canSkip()) {
             // Creative mode is allowed to jump straight to the result.
             this.skip();
             return true;

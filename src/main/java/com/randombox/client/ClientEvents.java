@@ -7,6 +7,7 @@ import org.joml.Vector3f;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.randombox.Rarity;
 import com.randombox.config.RBConfig;
+import com.randombox.enchantment.RandomBoxEnchantments;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -101,7 +102,7 @@ public class ClientEvents {
         Vec3 camera = event.getCamera().getPosition();
         PoseStack poseStack = event.getPoseStack();
         MultiBufferSource.BufferSource buffers = minecraft.renderBuffers().bufferSource();
-        int beamRadius = RBConfig.beamRadius();
+        int beamRadius = RandomBoxEnchantments.effectiveBeamRadius(minecraft.player, RBConfig.beamRadius());
 
         for (Map.Entry<BlockPos, ClientBoxCache.View> entry : boxes.entrySet()) {
             BlockPos pos = entry.getKey();

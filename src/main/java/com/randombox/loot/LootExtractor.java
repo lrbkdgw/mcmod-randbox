@@ -31,6 +31,7 @@ import net.minecraft.world.level.storage.loot.entries.LootPoolEntryContainer;
 import net.minecraft.world.level.storage.loot.entries.LootPoolSingletonContainer;
 import net.minecraft.world.level.storage.loot.entries.TagEntry;
 import net.minecraft.world.level.storage.loot.functions.LootItemFunction;
+import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 import net.minecraft.world.level.storage.loot.providers.number.NumberProvider;
 
 /**
@@ -51,6 +52,7 @@ public final class LootExtractor {
 
     private static Gson tableGson;
     private static Gson functionGson;
+    private static Gson conditionGson;
 
     private LootExtractor() {
     }
@@ -67,6 +69,13 @@ public final class LootExtractor {
             functionGson = Deserializers.createFunctionSerializer().create();
         }
         return functionGson;
+    }
+
+    private static Gson conditionGson() {
+        if (conditionGson == null) {
+            conditionGson = Deserializers.createConditionSerializer().create();
+        }
+        return conditionGson;
     }
 
     public static ResourceLocation itemId(Item item) {
@@ -121,6 +130,9 @@ public final class LootExtractor {
                 continue;
             }
             JsonObject poolJson = poolElement.getAsJsonObject();
+            if (!conditionsPass(poolJson, context)) {
+                continue;
+            }
             BoxLootTable.Pool pool = result.addPool();
             pool.setAverageRolls(averageRolls(poolJson.get("rolls"), context));
             if (poolJson.has("entries") && poolJson.get("entries").isJsonArray()) {
@@ -138,7 +150,7 @@ public final class LootExtractor {
 
     private static void readEntry(JsonObject json, BoxLootTable.Pool pool, LootContext context,
                                   LootDataResolver resolver, int depth) {
-        if (depth > MAX_DEPTH) {
+        if (depth > MAX_DEPTH || !conditionsPass(json, context)) {
             return;
         }
         String type = json.has("type") ? json.get("type").getAsString() : "minecraft:empty";
@@ -239,6 +251,29 @@ public final class LootExtractor {
         int[] counts = countsOf(json);
         entry.setMinCount(counts[0]);
         entry.setMaxCount(counts[1]);
+    }
+
+    /** Evaluates vanilla pool / entry conditions (random chance, entity predicates, etc.). */
+    private static boolean conditionsPass(JsonObject json, LootContext context) {
+        if (!json.has("conditions") || !json.get("conditions").isJsonArray()) {
+            return true;
+        }
+        if (context == null) {
+            return true;
+        }
+        for (JsonElement element : json.getAsJsonArray("conditions")) {
+            try {
+                LootItemCondition condition = conditionGson().fromJson(element, LootItemCondition.class);
+                if (condition != null && !condition.test(context)) {
+                    return false;
+                }
+            } catch (Exception exception) {
+                // Modded datapacks may add condition types that are not available in the current
+                // environment. Keep the entry instead of deleting potentially valid vanilla loot.
+                RandomBoxMod.LOGGER.debug("Skipping unreadable loot condition {}", element, exception);
+            }
+        }
+        return true;
     }
 
     /** Rebuilds the original loot functions of an entry from its json. */

@@ -5,6 +5,11 @@
   "randombox.rarity.legendary": "传说",
   "randombox.rarity.mythic": "绝世",
 
+  "enchantment.randombox.treasure_sense": "宝藏感知",
+  "enchantment.randombox.quick_treasure": "快速寻宝",
+  "enchantment.randombox.treasure_deep_dig": "宝藏深掘",
+  "enchantment.randombox.treasure_ascension": "宝藏升华",
+
   "randombox.screen.reel": "宝箱抽奖",
   "randombox.screen.title": "%s 宝箱",
   "randombox.screen.no_skip": "抽奖过程不可跳过，ESC 取消本次抽奖",

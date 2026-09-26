@@ -6,6 +6,7 @@ import com.randombox.command.RandomBoxCommand;
 import com.randombox.config.RBConfig;
 import com.randombox.data.BoxData;
 import com.randombox.data.BoxSavedData;
+import com.randombox.enchantment.RandomBoxEnchantments;
 import com.randombox.loot.CustomLootStore;
 import com.randombox.loot.ItemQuality;
 import com.randombox.net.RBNetwork;
@@ -140,7 +141,9 @@ public class BoxEvents {
         this.syncCounter = 0;
         for (ServerPlayer player : event.getServer().getPlayerList().getPlayers()) {
             ServerLevel level = player.serverLevel();
-            List<BoxData> boxes = BoxSavedData.get(level).near(player.blockPosition(), RBConfig.effectRadius());
+            int radius = Math.max(RBConfig.effectRadius(),
+                    RandomBoxEnchantments.effectiveBeamRadius(player, RBConfig.beamRadius()));
+            List<BoxData> boxes = BoxSavedData.get(level).near(player.blockPosition(), radius);
             this.forgetMissingBoxes(level, boxes);
             RBNetwork.toPlayer(player, SyncBoxesPacket.of(boxes));
         }

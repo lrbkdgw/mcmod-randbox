@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.randombox.client.ClientSetup;
+import com.randombox.enchantment.RandomBoxEnchantments;
 import com.randombox.event.BoxEvents;
 import com.randombox.net.RBNetwork;
 
@@ -23,6 +24,7 @@ public class RandomBoxMod {
     public RandomBoxMod() {
         IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
 
+        RandomBoxEnchantments.register(modBus);
         RBNetwork.register();
         MinecraftForge.EVENT_BUS.register(new BoxEvents());
 

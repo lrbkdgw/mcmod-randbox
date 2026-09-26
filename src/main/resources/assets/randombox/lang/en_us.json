@@ -5,6 +5,11 @@
   "randombox.rarity.legendary": "Legendary",
   "randombox.rarity.mythic": "Peerless",
 
+  "enchantment.randombox.treasure_sense": "Treasure Sense",
+  "enchantment.randombox.quick_treasure": "Quick Treasure",
+  "enchantment.randombox.treasure_deep_dig": "Treasure Deep Digging",
+  "enchantment.randombox.treasure_ascension": "Treasure Ascension",
+
   "randombox.screen.reel": "Box Lottery",
   "randombox.screen.title": "%s Box",
   "randombox.screen.no_skip": "The draw cannot be skipped - Esc cancels it",

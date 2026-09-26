@@ -6,6 +6,7 @@ import java.util.List;
 import com.randombox.RandomBoxMod;
 import com.randombox.Rarity;
 import com.randombox.config.RBConfig;
+import com.randombox.enchantment.RandomBoxEnchantments;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -59,11 +60,11 @@ public final class LootRoller {
         }
         BoxLootTable custom = CustomLootStore.get(tableId);
         if (custom != null && !custom.isEmpty()) {
-            return custom.applyItemQuality();
+            return SpecialLoot.apply(custom.copy().applyItemQuality(), tableId);
         }
         LootTable vanilla = level.getServer().getLootData().getLootTable(tableId);
-        return LootExtractor.extract(tableId, vanilla, context, level.getServer().getLootData())
-                .applyItemQuality();
+        return SpecialLoot.apply(LootExtractor.extract(tableId, vanilla, context, level.getServer().getLootData())
+                .applyItemQuality(), tableId);
     }
 
     public static Result roll(ServerLevel level, BlockPos pos, Player player, ResourceLocation tableId, Rarity rarity) {
@@ -72,7 +73,7 @@ public final class LootRoller {
         RandomSource random = level.getRandom();
         Result result = new Result();
 
-        int wanted = Math.max(1, RBConfig.itemCount(rarity));
+        int wanted = Math.max(1, RBConfig.itemCount(rarity) + RandomBoxEnchantments.bonusItemCount(player));
 
         if (model.isEmpty()) {
             // Nothing we can read from the table: fall back to repeated vanilla rolls, but still

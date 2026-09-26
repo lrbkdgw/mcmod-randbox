@@ -43,10 +43,10 @@ public final class RBConfig {
     /** Radius in which clients are told about unopened boxes (particles / beams). */
     private static int effectRadius = 32;
     /** Radius in which an unopened box shows its light beam. */
-    private static int beamRadius = 24;
+    private static int beamRadius = 12;
 
     /** Bumped when a default changes so outdated values are migrated instead of kept. */
-    private static final int VERSION = 2;
+    private static final int VERSION = 3;
 
     private RBConfig() {
     }
@@ -73,6 +73,11 @@ public final class RBConfig {
                     }
                     effectRadius = json.has("effectRadius") ? json.get("effectRadius").getAsInt() : effectRadius;
                     beamRadius = json.has("beamRadius") ? json.get("beamRadius").getAsInt() : beamRadius;
+                    if (version < 3) {
+                        // v3 intentionally halves the default beam distance. Existing v1/v2
+                        // configs are migrated once so old worlds get the new initial distance too.
+                        beamRadius = Math.max(1, Math.round(beamRadius * 0.5F));
+                    }
                 }
             }
             save(file);
