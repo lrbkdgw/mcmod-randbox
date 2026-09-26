@@ -15,6 +15,7 @@ import net.minecraft.client.renderer.blockentity.BeaconRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
@@ -37,10 +38,17 @@ public class ClientEvents {
         }
         RandomSource random = level.getRandom();
         Map<BlockPos, ClientBoxCache.View> boxes = ClientBoxCache.boxes();
+        java.util.List<BlockPos> gone = new java.util.ArrayList<>();
         for (Map.Entry<BlockPos, ClientBoxCache.View> entry : boxes.entrySet()) {
             BlockPos pos = entry.getKey();
             Rarity rarity = entry.getValue().rarity();
             if (minecraft.player.blockPosition().distSqr(pos) > RBConfig.effectRadius() * RBConfig.effectRadius()) {
+                continue;
+            }
+            if (!isBox(level, pos)) {
+                // the chest was just broken: stop the effect immediately instead of waiting for
+                // the next sync packet
+                gone.add(pos);
                 continue;
             }
             DustParticleOptions dust = new DustParticleOptions(
@@ -54,6 +62,17 @@ public class ClientEvents {
                 level.addParticle(dust, x, y, z, 0.0D, 0.01D, 0.0D);
             }
         }
+        for (BlockPos pos : gone) {
+            ClientBoxCache.forget(pos);
+        }
+    }
+
+    /** True while the block at that position still is a loot container. */
+    private static boolean isBox(ClientLevel level, BlockPos pos) {
+        if (!level.isLoaded(pos)) {
+            return true;
+        }
+        return level.getBlockEntity(pos) instanceof RandomizableContainerBlockEntity;
     }
 
     @SubscribeEvent
@@ -82,6 +101,9 @@ public class ClientEvents {
                 continue;
             }
             if (minecraft.player.blockPosition().distSqr(pos) > (double) beamRadius * beamRadius) {
+                continue;
+            }
+            if (!isBox(level, pos)) {
                 continue;
             }
             Rarity rarity = entry.getValue().rarity();

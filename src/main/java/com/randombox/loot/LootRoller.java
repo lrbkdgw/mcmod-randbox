@@ -59,7 +59,8 @@ public final class LootRoller {
             return custom.applyItemQuality();
         }
         LootTable vanilla = level.getServer().getLootData().getLootTable(tableId);
-        return LootExtractor.extract(tableId, vanilla, context).applyItemQuality();
+        return LootExtractor.extract(tableId, vanilla, context, level.getServer().getLootData())
+                .applyItemQuality();
     }
 
     public static Result roll(ServerLevel level, BlockPos pos, Player player, ResourceLocation tableId, Rarity rarity) {
@@ -99,7 +100,14 @@ public final class LootRoller {
             }
             result.prizes.addAll(drawn);
             for (ItemStack prize : result.prizes) {
-                result.reels.add(fallbackReel(prize, result.prizes, random));
+                int index = prizeIndex(random);
+                List<ItemStack> reel = new ArrayList<>();
+                for (int i = 0; i < REEL_LENGTH; i++) {
+                    reel.add(result.prizes.get(random.nextInt(result.prizes.size())).copy());
+                }
+                reel.set(index, prize.copy());
+                result.reels.add(reel);
+                result.prizeIndices.add(index);
             }
             return result;
         }
@@ -120,14 +128,18 @@ public final class LootRoller {
             result.prizes.remove(result.prizes.size() - 1);
         }
 
+        // Every reel scrolls through the items that this table can actually produce, drawn with
+        // the same weights as the prize itself, so what flies by mirrors the real chances.
         for (ItemStack prize : result.prizes) {
             List<ItemStack> reel = new ArrayList<>();
-            for (int i = 0; i < REEL_LENGTH - 1; i++) {
+            for (int i = 0; i < REEL_LENGTH; i++) {
                 ItemStack filler = drawOne(model, rarity, context, random, countMultiplier);
                 reel.add(filler == null || filler.isEmpty() ? prize.copy() : filler);
             }
-            reel.add(prize.copy());
+            int index = prizeIndex(random);
+            reel.set(index, prize.copy());
             result.reels.add(reel);
+            result.prizeIndices.add(index);
         }
         return result;
     }
@@ -222,18 +234,20 @@ public final class LootRoller {
         return Math.max(1, Math.min(Math.max(1, maxStackSize), whole));
     }
 
-    private static List<ItemStack> fallbackReel(ItemStack prize, List<ItemStack> pool, RandomSource random) {
-        List<ItemStack> reel = new ArrayList<>();
-        for (int i = 0; i < REEL_LENGTH - 1; i++) {
-            reel.add(pool.get(random.nextInt(pool.size())).copy());
-        }
-        reel.add(prize.copy());
-        return reel;
+    /**
+     * Where the winning item sits inside a reel. Never the very last entry: a few more items
+     * follow it so the strip keeps looking like an endless reel that stopped somewhere.
+     */
+    private static int prizeIndex(RandomSource random) {
+        int tail = 2 + random.nextInt(4);
+        return Math.max(1, REEL_LENGTH - 1 - tail);
     }
 
     /** Prizes plus the item strips the client scrolls through. */
     public static class Result {
         public final List<ItemStack> prizes = new ArrayList<>();
         public final List<List<ItemStack>> reels = new ArrayList<>();
+        /** Index of the winning item inside every reel (never the last one). */
+        public final List<Integer> prizeIndices = new ArrayList<>();
     }
 }

@@ -24,6 +24,7 @@ import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.event.server.ServerAboutToStartEvent;
 
@@ -86,6 +87,44 @@ public class BoxEvents {
         }
     }
 
+    /** A broken box must not keep glowing. */
+    @SubscribeEvent
+    public void onBlockBreak(BlockEvent.BreakEvent event) {
+        if (!(event.getLevel() instanceof ServerLevel level)) {
+            return;
+        }
+        BoxSavedData saved = BoxSavedData.get(level);
+        BlockPos pos = event.getPos();
+        saved.remove(pos);
+        for (BlockPos neighbour : new BlockPos[] {pos.north(), pos.south(), pos.east(), pos.west()}) {
+            BoxData data = saved.get(neighbour);
+            if (data != null && !(level.getBlockEntity(neighbour) instanceof RandomizableContainerBlockEntity)) {
+                saved.remove(neighbour);
+            }
+        }
+    }
+
+    /** Drops boxes whose block is gone (broken, exploded, /setblock, ...). */
+    private void forgetMissingBoxes(ServerLevel level, List<BoxData> boxes) {
+        BoxSavedData saved = null;
+        for (BoxData box : boxes) {
+            if (!level.isLoaded(box.pos())) {
+                continue;
+            }
+            if (level.getBlockEntity(box.pos()) instanceof RandomizableContainerBlockEntity) {
+                continue;
+            }
+            if (saved == null) {
+                saved = BoxSavedData.get(level);
+            }
+            saved.remove(box.pos());
+        }
+        if (saved != null) {
+            boxes.removeIf(box -> level.isLoaded(box.pos())
+                    && !(level.getBlockEntity(box.pos()) instanceof RandomizableContainerBlockEntity));
+        }
+    }
+
     @SubscribeEvent
     public void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) {
@@ -99,6 +138,7 @@ public class BoxEvents {
         for (ServerPlayer player : event.getServer().getPlayerList().getPlayers()) {
             ServerLevel level = player.serverLevel();
             List<BoxData> boxes = BoxSavedData.get(level).near(player.blockPosition(), RBConfig.effectRadius());
+            this.forgetMissingBoxes(level, boxes);
             RBNetwork.toPlayer(player, SyncBoxesPacket.of(boxes));
         }
     }

@@ -93,7 +93,7 @@ public final class ReelManager {
         long deadline = level.getGameTime() + (long) (total * 20.0F) + 200L;
         PENDING.put(player.getUUID(), new Pending(pos, rarity, rolled.prizes, deadline));
 
-        RBNetwork.toPlayer(player, new StartReelPacket(pos, rarity, rolled.reels, durations));
+        RBNetwork.toPlayer(player, new StartReelPacket(pos, rarity, rolled.reels, durations, rolled.prizeIndices));
         level.playSound(null, pos, SoundEvents.CHEST_OPEN, SoundSource.BLOCKS, 0.6F, 1.0F);
         return true;
     }

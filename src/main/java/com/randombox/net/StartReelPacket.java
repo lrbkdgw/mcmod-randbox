@@ -20,12 +20,20 @@ public class StartReelPacket {
     private final Rarity rarity;
     private final List<List<ItemStack>> reels;
     private final List<Float> durations;
+    private final List<Integer> prizeIndices;
 
-    public StartReelPacket(BlockPos pos, Rarity rarity, List<List<ItemStack>> reels, List<Float> durations) {
+    public StartReelPacket(BlockPos pos, Rarity rarity, List<List<ItemStack>> reels, List<Float> durations,
+                           List<Integer> prizeIndices) {
         this.pos = pos;
         this.rarity = rarity;
         this.reels = reels;
         this.durations = durations;
+        this.prizeIndices = prizeIndices;
+    }
+
+    /** Index of the winning item inside every reel. */
+    public List<Integer> prizeIndices() {
+        return this.prizeIndices;
     }
 
     public BlockPos pos() {
@@ -58,6 +66,10 @@ public class StartReelPacket {
         for (Float duration : packet.durations) {
             buf.writeFloat(duration);
         }
+        buf.writeVarInt(packet.prizeIndices.size());
+        for (Integer index : packet.prizeIndices) {
+            buf.writeVarInt(index);
+        }
     }
 
     public static StartReelPacket decode(FriendlyByteBuf buf) {
@@ -78,7 +90,12 @@ public class StartReelPacket {
         for (int i = 0; i < durationCount; i++) {
             durations.add(buf.readFloat());
         }
-        return new StartReelPacket(pos, rarity, reels, durations);
+        int indexCount = buf.readVarInt();
+        List<Integer> prizeIndices = new ArrayList<>();
+        for (int i = 0; i < indexCount; i++) {
+            prizeIndices.add(buf.readVarInt());
+        }
+        return new StartReelPacket(pos, rarity, reels, durations, prizeIndices);
     }
 
     public static void handle(StartReelPacket packet, Supplier<NetworkEvent.Context> context) {

@@ -46,13 +46,13 @@ public class LootEditorScreen extends Screen {
     private EditBox searchBox;
     private EditBox newTableBox;
     private final List<Row> rows = new ArrayList<>();
+    private final List<Button> listButtons = new ArrayList<>();
 
     private int scroll;
     private int entryPage;
     private int selectedPool;
     private BoxLootTable selected;
     private Component status = Component.empty();
-    private boolean listDirty;
 
     // layout, recomputed in init()
     private int listWidth;
@@ -139,40 +139,43 @@ public class LootEditorScreen extends Screen {
         this.searchBox.setMaxLength(128);
         this.searchBox.setValue(lastFilter);
         this.searchBox.setHint(Component.translatable("randombox.editor.search"));
+        // The list is updated in place (labels + visibility of already existing buttons), never by
+        // rebuilding the screen: rebuilding would throw away the widget that is being typed in and
+        // steal the focus from the fields on the right hand side.
         this.searchBox.setResponder(value -> {
             lastFilter = value;
             this.scroll = 0;
-            // rebuilding right inside the responder would destroy the box that is being typed in,
-            // so the list is refreshed on the next client tick instead
-            this.listDirty = true;
+            this.refreshVisible();
+            this.updateListButtons();
         });
         this.addRenderableWidget(this.searchBox);
 
         this.refreshVisible();
 
         int rowsShown = this.listRows();
+        this.listButtons.clear();
         for (int i = 0; i < rowsShown; i++) {
-            int index = this.scroll + i;
-            if (index >= this.visible.size()) {
-                break;
-            }
-            ResourceLocation id = this.visible.get(index);
-            boolean loaded = find(id) != null;
-            Component label = Component.literal((loaded ? "* " : "") + clip(id.toString(), this.listWidth - 8))
-                    .withStyle(loaded ? ChatFormatting.YELLOW : ChatFormatting.GRAY);
-            this.addRenderableWidget(Button.builder(label, button -> openTable(id))
-                    .bounds(MARGIN, this.listTop + i * ROW_HEIGHT, this.listWidth, ROW_HEIGHT - 1).build());
+            int row = i;
+            Button button = Button.builder(Component.empty(), b -> {
+                int index = this.scroll + row;
+                if (index >= 0 && index < this.visible.size()) {
+                    openTable(this.visible.get(index));
+                }
+            }).bounds(MARGIN, this.listTop + i * ROW_HEIGHT, this.listWidth, ROW_HEIGHT - 1).build();
+            this.listButtons.add(button);
+            this.addRenderableWidget(button);
         }
+        this.updateListButtons();
 
         this.listBottom = this.listTop + rowsShown * ROW_HEIGHT + 2;
         int halfList = (this.listWidth - 4) / 2;
         this.addRenderableWidget(Button.builder(Component.literal("\u25B2"), button -> {
             this.scroll = Math.max(0, this.scroll - this.listRows());
-            this.rebuild();
+            this.updateListButtons();
         }).bounds(MARGIN, this.listBottom, halfList, 16).build());
         this.addRenderableWidget(Button.builder(Component.literal("\u25BC"), button -> {
             this.scroll = Math.min(Math.max(0, this.visible.size() - this.listRows()), this.scroll + this.listRows());
-            this.rebuild();
+            this.updateListButtons();
         }).bounds(MARGIN + halfList + 4, this.listBottom, halfList, 16).build());
 
         this.newTableBox = new EditBox(this.font, MARGIN, this.listBottom + 20, this.listWidth, 16,
@@ -412,21 +415,29 @@ public class LootEditorScreen extends Screen {
         this.rebuild();
     }
 
-    private void rebuild() {
-        this.rebuildWidgets();
+    /** Refreshes label and visibility of the (never recreated) list buttons. */
+    private void updateListButtons() {
+        int rows = this.listButtons.size();
+        this.scroll = Math.max(0, Math.min(this.scroll, Math.max(0, this.visible.size() - rows)));
+        for (int i = 0; i < rows; i++) {
+            Button button = this.listButtons.get(i);
+            int index = this.scroll + i;
+            if (index >= this.visible.size()) {
+                button.visible = false;
+                button.active = false;
+                continue;
+            }
+            ResourceLocation id = this.visible.get(index);
+            boolean loaded = find(id) != null;
+            button.visible = true;
+            button.active = true;
+            button.setMessage(Component.literal((loaded ? "* " : "") + clip(id.toString(), this.listWidth - 8))
+                    .withStyle(loaded ? ChatFormatting.YELLOW : ChatFormatting.GRAY));
+        }
     }
 
-    @Override
-    public void tick() {
-        super.tick();
-        if (this.listDirty) {
-            this.listDirty = false;
-            // init() restores the text from lastFilter, so only the caret and focus need help
-            this.rebuild();
-            this.searchBox.moveCursorToEnd();
-            this.setFocused(this.searchBox);
-            this.searchBox.setFocused(true);
-        }
+    private void rebuild() {
+        this.rebuildWidgets();
     }
 
     /** Cuts a string so it never gets wider than {@code maxWidth} pixels. */
@@ -446,7 +457,7 @@ public class LootEditorScreen extends Screen {
         if (mouseX < this.panelX) {
             int max = Math.max(0, this.visible.size() - this.listRows());
             this.scroll = Math.max(0, Math.min(max, this.scroll - (int) Math.signum(delta) * 3));
-            this.rebuild();
+            this.updateListButtons();
             return true;
         }
         return super.mouseScrolled(mouseX, mouseY, delta);

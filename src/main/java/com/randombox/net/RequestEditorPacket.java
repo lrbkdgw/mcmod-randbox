@@ -61,7 +61,8 @@ public class RequestEditorPacket {
             if (packet.importId != null && !CustomLootStore.has(packet.importId)) {
                 LootContext lootContext = LootRoller.createContext(level, BlockPos.ZERO, player);
                 LootTable vanilla = level.getServer().getLootData().getLootTable(packet.importId);
-                BoxLootTable imported = LootExtractor.extract(packet.importId, vanilla, lootContext);
+                BoxLootTable imported = LootExtractor.extract(packet.importId, vanilla, lootContext,
+                        level.getServer().getLootData());
                 if (imported.isEmpty()) {
                     // Unknown or unreadable table: hand out an empty skeleton so it can still be
                     // filled in by hand instead of silently doing nothing.

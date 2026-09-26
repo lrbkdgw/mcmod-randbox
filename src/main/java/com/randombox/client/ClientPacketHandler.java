@@ -18,7 +18,7 @@ public final class ClientPacketHandler {
 
     public static void handleStartReel(StartReelPacket packet) {
         Minecraft minecraft = Minecraft.getInstance();
-        minecraft.setScreen(new ReelScreen(packet.pos(), packet.rarity(), packet.reels(), packet.durations()));
+        minecraft.setScreen(new ReelScreen(packet.pos(), packet.rarity(), packet.reels(), packet.durations(), packet.prizeIndices()));
     }
 
     public static void handleSyncBoxes(SyncBoxesPacket packet) {

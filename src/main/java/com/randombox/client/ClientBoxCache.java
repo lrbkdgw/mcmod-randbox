@@ -24,6 +24,11 @@ public final class ClientBoxCache {
         return Collections.unmodifiableMap(BOXES);
     }
 
+    /** Drops one box, used when its block turns out to be gone. */
+    public static void forget(BlockPos pos) {
+        BOXES.remove(pos);
+    }
+
     public static void clear() {
         BOXES.clear();
     }

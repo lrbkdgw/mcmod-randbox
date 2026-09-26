@@ -26,6 +26,7 @@ public class ReelScreen extends Screen {
     private final BlockPos pos;
     private final Rarity rarity;
     private final List<List<ItemStack>> reels;
+    private final int[] prizeIndices;
     private final float[] stopTimes;
     private final boolean[] landed;
     private final float totalTime;
@@ -33,11 +34,18 @@ public class ReelScreen extends Screen {
     private long startMillis;
     private boolean finished;
 
-    public ReelScreen(BlockPos pos, Rarity rarity, List<List<ItemStack>> reels, List<Float> durations) {
+    public ReelScreen(BlockPos pos, Rarity rarity, List<List<ItemStack>> reels, List<Float> durations,
+                      List<Integer> prizeIndices) {
         super(Component.translatable("randombox.screen.reel"));
         this.pos = pos;
         this.rarity = rarity;
         this.reels = reels;
+        this.prizeIndices = new int[reels.size()];
+        for (int i = 0; i < reels.size(); i++) {
+            int fallback = Math.max(0, reels.get(i).size() - 1);
+            int index = i < prizeIndices.size() ? prizeIndices.get(i) : fallback;
+            this.prizeIndices[i] = Math.max(0, Math.min(fallback, index));
+        }
         this.stopTimes = new float[reels.size()];
         this.landed = new boolean[reels.size()];
         float time = 0.0F;
@@ -123,7 +131,7 @@ public class ReelScreen extends Screen {
                 continue;
             }
             float progress = this.progress(column, time);
-            float position = progress * (reel.size() - 1);
+            float position = progress * this.prizeIndices[column];
             int base = (int) Math.floor(position);
             float fraction = position - base;
             int x = left + column * CELL + (CELL - SLOT) / 2;
