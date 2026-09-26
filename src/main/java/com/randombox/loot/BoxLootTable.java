@@ -130,17 +130,20 @@ public class BoxLootTable {
             return entry;
         }
 
-        /** Expected item amount of this pool, used as the pool selection weight. */
+        /**
+         * How many item slots this pool is expected to contribute, i.e. its average number of
+         * rolls. This is the weight used to pick the pool of a drawn item, so a table with
+         * {@code rolls} 3 / 5 / 0.5 hands out items in exactly that ratio.
+         *
+         * <p>The stack <em>size</em> deliberately does not matter here: weighting a pool by the
+         * amount of items in a stack made pools of cheap bulk material (gold ingots, blocks)
+         * swallow almost every draw.
+         */
         public float expectedItems() {
             if (this.entries.isEmpty()) {
                 return 0.0F;
             }
-            float avgStack = 0.0F;
-            for (Entry entry : this.entries) {
-                avgStack += (entry.minCount() + entry.maxCount()) * 0.5F;
-            }
-            avgStack /= this.entries.size();
-            return this.averageRolls * Math.max(1.0F, avgStack);
+            return Math.max(0.0F, this.averageRolls);
         }
 
         public void write(FriendlyByteBuf buf) {

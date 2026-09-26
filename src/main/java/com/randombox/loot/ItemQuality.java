@@ -36,6 +36,9 @@ import net.minecraft.world.item.Items;
 public final class ItemQuality {
     /** Highest quality value the scale uses. */
     public static final int MAX = 4;
+    /** Bumped whenever the built in table changes, outdated files are regenerated. */
+    private static final int VERSION = 2;
+    private static final String VERSION_KEY = "__version";
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Map<ResourceLocation, Integer> QUALITIES = new LinkedHashMap<>();
@@ -52,16 +55,25 @@ public final class ItemQuality {
             if (Files.exists(file)) {
                 try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
                     JsonObject json = JsonParser.parseReader(reader).getAsJsonObject();
-                    for (String key : json.keySet()) {
-                        ResourceLocation id = ResourceLocation.tryParse(key);
-                        if (id == null) {
-                            continue;
-                        }
-                        int value = Math.min(MAX, json.get(key).getAsInt());
-                        if (value <= 0) {
-                            QUALITIES.remove(id);
-                        } else {
-                            QUALITIES.put(id, value);
+                    int version = json.has(VERSION_KEY) ? json.get(VERSION_KEY).getAsInt() : 1;
+                    if (version != VERSION) {
+                        RandomBoxMod.LOGGER.info("item_quality.json is outdated (v{}), writing the "
+                                + "current defaults (v{})", version, VERSION);
+                    } else {
+                        for (String key : json.keySet()) {
+                            if (key.startsWith("__")) {
+                                continue;
+                            }
+                            ResourceLocation id = ResourceLocation.tryParse(key);
+                            if (id == null) {
+                                continue;
+                            }
+                            int value = Math.min(MAX, json.get(key).getAsInt());
+                            if (value <= 0) {
+                                QUALITIES.remove(id);
+                            } else {
+                                QUALITIES.put(id, value);
+                            }
                         }
                     }
                 }
@@ -80,6 +92,7 @@ public final class ItemQuality {
         try {
             Files.createDirectories(file.getParent());
             JsonObject json = new JsonObject();
+            json.addProperty(VERSION_KEY, VERSION);
             for (Map.Entry<ResourceLocation, Integer> entry : QUALITIES.entrySet()) {
                 json.addProperty(entry.getKey().toString(), entry.getValue());
             }
@@ -129,16 +142,16 @@ public final class ItemQuality {
     }
 
     /**
-     * The built in table. The scale is {@code 0 - 4} and only a hand picked set of items gets a
-     * value at all - everything that is not listed here stays at {@code 0}.
+     * The built in table. The scale is {@code 0 - 4} and stays deliberately low: only truly
+     * special items get 3 or 4, ordinary chest filler stays at {@code 0}.
      *
      * <ul>
-     *   <li>4: unique / end game (dragon egg, nether star, enchanted golden apple, elytra, beacon)</li>
-     *   <li>3: netherite ingot, totem of undying, heart of the sea, dragon head, diamond block ...</li>
-     *   <li>2: wither skeleton skull, ancient debris, conduit, netherite &amp; diamond gear,
-     *       diamond, emerald, shulker shell, mob heads, sniffer egg, sponge ...</li>
+     *   <li>4: dragon egg, nether star, enchanted golden apple, elytra, beacon</li>
+     *   <li>3: netherite ingot / block, totem of undying, heart of the sea, dragon head</li>
+     *   <li>2: wither skeleton skull, ancient debris, conduit, netherite gear / scrap / template,
+     *       diamond, emerald (and their blocks), shulker shell, echo shard, sniffer egg</li>
      *   <li>1: enchanted book, trident, golden apple, horse armor, music discs, smithing
-     *       templates, pottery sherds, saddle, bell, blaze rod, ender pearl ...</li>
+     *       templates, pottery sherds, diamond gear, mob heads, sponge, gold block ...</li>
      * </ul>
      */
     private static void defaults() {
@@ -146,35 +159,30 @@ public final class ItemQuality {
         put(4, Items.DRAGON_EGG, Items.NETHER_STAR, Items.ENCHANTED_GOLDEN_APPLE, Items.ELYTRA,
                 Items.BEACON);
 
-        // ---- 3: legendary drops ---------------------------------------------------------
-        put(3, Items.NETHERITE_INGOT, Items.TOTEM_OF_UNDYING, Items.HEART_OF_THE_SEA,
-                Items.DRAGON_HEAD, Items.NETHERITE_BLOCK, Items.DIAMOND_BLOCK,
-                Items.MUSIC_DISC_PIGSTEP, Items.SNIFFER_EGG);
+        // ---- 3: legendary ----------------------------------------------------------------
+        put(3, Items.NETHERITE_INGOT, Items.NETHERITE_BLOCK, Items.TOTEM_OF_UNDYING,
+                Items.HEART_OF_THE_SEA, Items.DRAGON_HEAD);
 
-        // ---- 2: rare ---------------------------------------------------------------------
+        // ---- 2: rare ----------------------------------------------------------------------
         put(2, Items.WITHER_SKELETON_SKULL, Items.ANCIENT_DEBRIS, Items.CONDUIT,
                 Items.NETHERITE_SCRAP, Items.NETHERITE_UPGRADE_SMITHING_TEMPLATE,
                 Items.NETHERITE_SWORD, Items.NETHERITE_PICKAXE, Items.NETHERITE_AXE,
                 Items.NETHERITE_SHOVEL, Items.NETHERITE_HOE, Items.NETHERITE_HELMET,
                 Items.NETHERITE_CHESTPLATE, Items.NETHERITE_LEGGINGS, Items.NETHERITE_BOOTS,
-                Items.DIAMOND, Items.EMERALD, Items.EMERALD_BLOCK, Items.SHULKER_SHELL,
-                Items.ECHO_SHARD, Items.RECOVERY_COMPASS,
+                Items.DIAMOND, Items.DIAMOND_BLOCK, Items.EMERALD, Items.EMERALD_BLOCK,
+                Items.SHULKER_SHELL, Items.ECHO_SHARD, Items.RECOVERY_COMPASS, Items.SNIFFER_EGG);
+
+        // ---- 1: uncommon -------------------------------------------------------------------
+        put(1, Items.ENCHANTED_BOOK, Items.TRIDENT, Items.GOLDEN_APPLE,
                 Items.DIAMOND_SWORD, Items.DIAMOND_PICKAXE, Items.DIAMOND_AXE,
                 Items.DIAMOND_SHOVEL, Items.DIAMOND_HOE, Items.DIAMOND_HELMET,
                 Items.DIAMOND_CHESTPLATE, Items.DIAMOND_LEGGINGS, Items.DIAMOND_BOOTS,
                 Items.END_CRYSTAL, Items.DRAGON_BREATH, Items.NAUTILUS_SHELL,
                 Items.SKELETON_SKULL, Items.ZOMBIE_HEAD, Items.CREEPER_HEAD,
                 Items.SPONGE, Items.WET_SPONGE, Items.LODESTONE, Items.GOLD_BLOCK,
-                Items.NAME_TAG);
-
-        // ---- 1: uncommon ------------------------------------------------------------------
-        put(1, Items.ENCHANTED_BOOK, Items.TRIDENT, Items.GOLDEN_APPLE, Items.EXPERIENCE_BOTTLE, Items.SADDLE, Items.BELL,
-                Items.SEA_LANTERN, Items.ENDER_EYE, Items.ENDER_PEARL, Items.BLAZE_ROD,
-                Items.GHAST_TEAR, Items.AMETHYST_SHARD, Items.GOLDEN_CARROT,
-                Items.GLISTERING_MELON_SLICE, Items.SPYGLASS, Items.CROSSBOW,
-                Items.SUSPICIOUS_STEW, Items.CRYING_OBSIDIAN, Items.GILDED_BLACKSTONE,
-                Items.IRON_BLOCK, Items.LAPIS_BLOCK, Items.OBSIDIAN, Items.GLOWSTONE,
-                Items.TNT, Items.GOLD_INGOT, Items.CAKE, Items.ENCHANTING_TABLE,
+                Items.NAME_TAG, Items.SADDLE, Items.BELL, Items.SEA_LANTERN,
+                Items.EXPERIENCE_BOTTLE, Items.ENDER_EYE, Items.GHAST_TEAR, Items.SPYGLASS,
+                Items.CROSSBOW, Items.ENCHANTING_TABLE,
                 Items.CHAINMAIL_HELMET, Items.CHAINMAIL_CHESTPLATE, Items.CHAINMAIL_LEGGINGS,
                 Items.CHAINMAIL_BOOTS);
 
@@ -187,7 +195,8 @@ public final class ItemQuality {
                 Items.MUSIC_DISC_CHIRP, Items.MUSIC_DISC_FAR, Items.MUSIC_DISC_MALL,
                 Items.MUSIC_DISC_MELLOHI, Items.MUSIC_DISC_STAL, Items.MUSIC_DISC_STRAD,
                 Items.MUSIC_DISC_WARD, Items.MUSIC_DISC_11, Items.MUSIC_DISC_WAIT,
-                Items.MUSIC_DISC_OTHERSIDE, Items.MUSIC_DISC_5, Items.DISC_FRAGMENT_5);
+                Items.MUSIC_DISC_OTHERSIDE, Items.MUSIC_DISC_5, Items.MUSIC_DISC_PIGSTEP,
+                Items.DISC_FRAGMENT_5);
 
         // armor trim smithing templates
         put(1, Items.COAST_ARMOR_TRIM_SMITHING_TEMPLATE, Items.DUNE_ARMOR_TRIM_SMITHING_TEMPLATE,

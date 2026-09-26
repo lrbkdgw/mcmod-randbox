@@ -6,6 +6,7 @@ import com.randombox.Rarity;
 import com.randombox.net.RBNetwork;
 import com.randombox.net.ReelFinishedPacket;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
@@ -30,6 +31,9 @@ public class ReelScreen extends Screen {
     private final float[] stopTimes;
     private final boolean[] landed;
     private final float totalTime;
+
+    /** The lottery that is currently running, used to force the screen back open. */
+    private static ReelScreen active;
 
     private long startMillis;
     private boolean finished;
@@ -58,7 +62,34 @@ public class ReelScreen extends Screen {
 
     @Override
     protected void init() {
-        this.startMillis = System.currentTimeMillis();
+        if (this.startMillis == 0L) {
+            this.startMillis = System.currentTimeMillis();
+        }
+        active = this;
+    }
+
+    /** The running lottery screen, or null. */
+    public static ReelScreen active() {
+        return active;
+    }
+
+    public static void clearActive() {
+        active = null;
+    }
+
+    @Override
+    public void removed() {
+        // Esc, the inventory key, a server side screen change - whatever closed us, the lottery
+        // cannot be skipped, so the screen puts itself back in front of the player.
+        if (!this.finished && active == this) {
+            Minecraft minecraft = Minecraft.getInstance();
+            minecraft.execute(() -> {
+                if (active == this && !this.finished) {
+                    minecraft.setScreen(this);
+                }
+            });
+        }
+        super.removed();
     }
 
     private float elapsed() {
@@ -77,7 +108,22 @@ public class ReelScreen extends Screen {
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        // Nothing can skip the lottery.
+        // Nothing can skip the lottery - not Esc, not Space, not the inventory key.
+        return true;
+    }
+
+    @Override
+    public boolean keyReleased(int keyCode, int scanCode, int modifiers) {
+        return true;
+    }
+
+    @Override
+    public boolean charTyped(char codePoint, int modifiers) {
+        return true;
+    }
+
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
         return true;
     }
 
@@ -106,6 +152,7 @@ public class ReelScreen extends Screen {
         }
         if (!this.finished && time >= this.totalTime + END_DELAY) {
             this.finished = true;
+            active = null;
             RBNetwork.toServer(new ReelFinishedPacket(this.pos));
             if (this.minecraft != null) {
                 this.minecraft.setScreen(null);

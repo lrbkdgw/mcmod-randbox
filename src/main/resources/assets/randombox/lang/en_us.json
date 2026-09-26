@@ -13,6 +13,8 @@
   "randombox.message.busy": "This box is already being opened.",
   "randombox.message.result": "%s box opened: %s items",
 
+  "randombox.message.broken": "Broken %s box: %s items dropped",
+
   "randombox.editor.tables": "Loot tables",
   "randombox.editor.new_id": "New table id",
   "randombox.editor.create": "Create",

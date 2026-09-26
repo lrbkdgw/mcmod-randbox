@@ -13,6 +13,8 @@
   "randombox.message.busy": "这个宝箱正在被开启。",
   "randombox.message.result": "%s 宝箱已开启：%s 件物品",
 
+  "randombox.message.broken": "挖掉了 %s 宝箱：掉落 %s 件物品",
+
   "randombox.editor.tables": "战利品表",
   "randombox.editor.new_id": "新战利品表 ID",
   "randombox.editor.create": "新建",

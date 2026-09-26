@@ -34,7 +34,10 @@ import net.minecraft.world.phys.Vec3;
  */
 public final class LootRoller {
     /** How many items a reel column scrolls through before it stops. */
-    public static final int REEL_LENGTH = 40;
+    public static final int REEL_LENGTH = 56;
+    /** The winning item is this many items away from the end of the strip. */
+    public static final int MIN_TAIL = 6;
+    public static final int MAX_TAIL = 15;
 
     private LootRoller() {
     }
@@ -185,7 +188,7 @@ public final class LootRoller {
         return stack;
     }
 
-    /** Weighted by the average item amount of every pool. */
+    /** Weighted by how many items a pool is expected to roll (its average {@code rolls}). */
     private static BoxLootTable.Pool pickPool(BoxLootTable model, RandomSource random) {
         float total = 0.0F;
         for (BoxLootTable.Pool pool : model.pools()) {
@@ -239,7 +242,7 @@ public final class LootRoller {
      * follow it so the strip keeps looking like an endless reel that stopped somewhere.
      */
     private static int prizeIndex(RandomSource random) {
-        int tail = 2 + random.nextInt(4);
+        int tail = MIN_TAIL + random.nextInt(MAX_TAIL - MIN_TAIL + 1);
         return Math.max(1, REEL_LENGTH - 1 - tail);
     }
 

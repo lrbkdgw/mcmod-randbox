@@ -33,7 +33,16 @@ public class ClientEvents {
         }
         Minecraft minecraft = Minecraft.getInstance();
         ClientLevel level = minecraft.level;
-        if (level == null || minecraft.player == null || minecraft.isPaused()) {
+        if (level == null || minecraft.player == null) {
+            ReelScreen.clearActive();
+            return;
+        }
+        // The lottery cannot be skipped: if something closed the screen, bring it back.
+        ReelScreen reel = ReelScreen.active();
+        if (reel != null && minecraft.screen != reel) {
+            minecraft.setScreen(reel);
+        }
+        if (minecraft.isPaused()) {
             return;
         }
         RandomSource random = level.getRandom();

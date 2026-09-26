@@ -58,6 +58,14 @@ public final class ReelManager {
         if (tableId == null) {
             return false;
         }
+        // The same player opening the box again (disconnect, closed client, ...) simply gets the
+        // very same lottery again - the result never changes and it can never be re-rolled.
+        Pending own = PENDING.get(player.getUUID());
+        if (own != null && own.pos.equals(pos)) {
+            RBNetwork.toPlayer(player, new StartReelPacket(own.pos, own.rarity, own.reels,
+                    own.durations, own.prizeIndices));
+            return true;
+        }
         boolean locked = false;
         for (RandomizableContainerBlockEntity part : parts) {
             if (isLocked(level, part.getBlockPos())) {
@@ -91,7 +99,8 @@ public final class ReelManager {
         }
 
         long deadline = level.getGameTime() + (long) (total * 20.0F) + 200L;
-        PENDING.put(player.getUUID(), new Pending(pos, rarity, rolled.prizes, deadline));
+        PENDING.put(player.getUUID(), new Pending(pos, rarity, rolled.prizes, deadline,
+                rolled.reels, durations, rolled.prizeIndices));
 
         RBNetwork.toPlayer(player, new StartReelPacket(pos, rarity, rolled.reels, durations, rolled.prizeIndices));
         level.playSound(null, pos, SoundEvents.CHEST_OPEN, SoundSource.BLOCKS, 0.6F, 1.0F);
@@ -241,6 +250,8 @@ public final class ReelManager {
         return null;
     }
 
-    private record Pending(BlockPos pos, Rarity rarity, List<ItemStack> prizes, long deadline) {
+    private record Pending(BlockPos pos, Rarity rarity, List<ItemStack> prizes, long deadline,
+                           List<List<ItemStack>> reels, List<Float> durations,
+                           List<Integer> prizeIndices) {
     }
 }
