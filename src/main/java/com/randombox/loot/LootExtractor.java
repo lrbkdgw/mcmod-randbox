@@ -1,6 +1,7 @@
 package com.randombox.loot;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
@@ -144,12 +145,17 @@ public final class LootExtractor {
         entry.setMaxCount(1);
     }
 
-    /** Reads the {@code index}-th {@code int} field declared by {@code owner}. */
+    /**
+     * Reads the {@code index}-th non static {@code int} field declared by {@code owner}.
+     *
+     * <p>{@code LootPoolSingletonContainer} declares {@code weight} and {@code quality} in that
+     * order (the {@code DEFAULT_*} constants before them are static and therefore skipped).
+     */
     private static int readInt(Object instance, Class<?> owner, String hint, int index, int fallback) {
         try {
             int seen = 0;
             for (Field field : owner.getDeclaredFields()) {
-                if (field.getType() == int.class) {
+                if (field.getType() == int.class && !Modifier.isStatic(field.getModifiers())) {
                     if (seen == index) {
                         field.setAccessible(true);
                         return field.getInt(instance);
@@ -198,6 +204,9 @@ public final class LootExtractor {
         Class<?> current = owner;
         while (current != null && current != Object.class) {
             for (Field field : current.getDeclaredFields()) {
+                if (Modifier.isStatic(field.getModifiers())) {
+                    continue;
+                }
                 if (type.isAssignableFrom(field.getType())) {
                     try {
                         field.setAccessible(true);

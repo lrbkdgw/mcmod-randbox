@@ -7,7 +7,7 @@ import com.randombox.event.ReelManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.neoforge.network.NetworkEvent;
+import net.minecraftforge.network.NetworkEvent;
 
 /** Client -> server: the animation finished, hand out the prizes and open the container. */
 public class ReelFinishedPacket {

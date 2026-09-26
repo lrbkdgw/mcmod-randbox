@@ -16,7 +16,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.LootTable;
-import net.neoforged.neoforge.network.NetworkEvent;
+import net.minecraftforge.network.NetworkEvent;
 
 /**
  * Client -> server: open the loot table editor. Optionally asks for one specific vanilla table so

@@ -16,9 +16,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
-import net.neoforged.neoforge.event.TickEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.client.event.RenderLevelStageEvent;
+import net.minecraftforge.event.TickEvent;
 
 /** Particles around every unopened box plus the light beam of nearby ones. */
 public class ClientEvents {
@@ -87,8 +87,9 @@ public class ClientEvents {
             Rarity rarity = entry.getValue().rarity();
             poseStack.pushPose();
             poseStack.translate(pos.getX() - camera.x, pos.getY() - camera.y, pos.getZ() - camera.z);
-            BeaconRenderer.renderBeaconBeam(poseStack, buffers, event.getPartialTick(), level.getGameTime(),
-                    0, BEAM_HEIGHT, new float[]{rarity.red(), rarity.green(), rarity.blue()});
+            BeaconRenderer.renderBeaconBeam(poseStack, buffers, BeaconRenderer.BEAM_LOCATION,
+                    event.getPartialTick(), 1.0F, level.getGameTime(), 0, BEAM_HEIGHT,
+                    new float[]{rarity.red(), rarity.green(), rarity.blue()}, 0.2F, 0.25F);
             poseStack.popPose();
         }
         buffers.endBatch();

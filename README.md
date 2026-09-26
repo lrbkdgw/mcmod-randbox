@@ -108,29 +108,71 @@ Minecraft **Java 1.20.1 / NeoForge 47.x** 模组。把原版宝箱的「第一�
 
 ## 5. 构建
 
-正常构建（需要能访问 `maven.neoforged.net` 与 Mojang 的库）：
+### 5.1 正常构建（推荐，需要联网到 maven.neoforged.net）
+
+工程使用官方 NeoForge 1.20.1 MDK 的工具链（`net.neoforged.moddev.legacyforge`，
+与 `NeoForged/MDK @ 1.20.1-legacy` 一致）：
 
 ```bash
 ./gradlew build      # 或 gradle build
-# 产物：build/libs/randombox-1.0.0.jar
+# 产物：build/libs/randombox-1.0.0.jar（已自动 reobf，可直接放进 mods/）
 ```
 
-> **本仓库的沙箱环境没有 JDK，且 Maven / Gradle 分发站点均被网络策略拦截**
-> （`maven.neoforged.net`、`repo1.maven.org`、`services.gradle.org`、`libraries.minecraft.net` 全部不可达），
-> 因此无法在这里跑真正的 ForgeGradle 构建（它必须下载 NeoForge 与反混淆后的 Minecraft 依赖）。
->
-> 为了仍然能「编译出结果」，仓库内提供了离线类型检查：
->
-> ```bash
-> ./tools/offline-compile.sh
-> ```
->
-> 它会自动取一个 JRE（PyPI 的 `jdk4py`）和 Eclipse 批处理编译器（npm 包内自带的 jar），
-> 用 `tools/apistubs/` 下手写的 Minecraft / NeoForge API 桩把 `src/main/java` 整体编译一遍，
-> 输出 `build/offline-classes/`（167 个 class，0 error）。
-> 这验证了整套源码的语法与内部一致性，但**不是可运行的模组 jar**：真正的 jar 必须由
-> `./gradlew build` 在能联网的环境里生成（它还会做 reobf 重映射）。
-> `tools/apistubs/` 只用于这项检查，不会打进 jar。
+> 注意：NeoForge 1.20.1 的包名仍然是 `net.minecraftforge.*`，mods.toml 依赖的 modId 是 `forge`，
+> 依赖坐标为 `net.neoforged:forge:1.20.1-47.x`。（`net.neoforged.neoforge.*` 是 1.20.2+ 才改的。）
+
+### 5.2 本仓库中的离线编译（已完成，产物在 `dist/`）
+
+这个沙箱访问不了 Maven（`maven.neoforged.net`、`repo1.maven.org`、`libraries.minecraft.net`
+全部被拦截），也没有预装 JDK，所以无法直接跑 ForgeGradle / ModDevGradle。
+但**所有相关源码都能从 GitHub 取到**，于是这里用源码重建了一套「编译期 SDK」，
+并用它完成了对全部模组源码的真实编译：
+
+```bash
+./tools/build-sdk.sh        # 生成编译期 SDK（约 5900 个签名桩）
+./tools/offline-compile.sh  # 编译 + 打包（会在需要时自动调用 build-sdk.sh）
+```
+
+流水线：
+
+| 步骤 | 说明 |
+|---|---|
+| JDK | PyPI 的 `jdk4py`（JRE 25） |
+| 编译器 | Eclipse 批处理编译器（npm 包 `@ctxo/lang-java-analyzer` 内自带的 JDT jar），`-source/-target 17` |
+| Minecraft 1.20.1 API | `Blackjack200/minecraft_client_1_20_1`（Mojang 名的反编译源码，4786 个文件） |
+| NeoForge 47 API | `NeoForged/NeoForge @ 1.20.1` |
+| FML / EventBus | `NeoForged/FancyModLoader @ 1.20.1`、`MinecraftForge/EventBus @ 6.2.x` |
+| Brigadier / Gson / JOML / SLF4J | 各自上游仓库 |
+| 其余第三方类型（guava、netty、fastutil…） | 只出现在签名里，由 `tools/mkplaceholders.py` 自动生成占位类型 |
+
+`tools/stubgen.py` 用 tree-sitter 解析上述源码，去掉方法体、字段初始化和注解，
+只保留**真实的类层次与方法签名**，因此这是一次针对真实 API 的编译，而不是对着手写桩自说自话。
+
+结果：
+
+```
+>> compiling src/main/java against the Minecraft 1.20.1 / NeoForge 47 API
+>> errors in mod sources: 0
+   mod classes : 31
+   jar         : build/libs/randombox-1.0.0-dev.jar  (同时复制到 dist/)
+```
+
+这次真实编译顺带抓出了几个只有对着真 API 才能发现的问题，并已修复：
+
+1. **包名错误**：NeoForge 1.20.1 用的是 `net.minecraftforge.*` / `MinecraftForge.EVENT_BUS`，
+   而不是 1.20.2+ 的 `net.neoforged.neoforge.*`；mods.toml 的依赖 modId 应为 `forge`。
+2. `BeaconRenderer.renderBeaconBeam(PoseStack, MultiBufferSource, float, long, int, int, float[])`
+   在 1.20.1 里是 **private**，必须用公开的 11 参数重载（带 `BEAM_LOCATION`、`beamRadius`、`glowRadius`）。
+3. `LootPoolSingletonContainer` 的前两个 `int` 字段其实是 `DEFAULT_WEIGHT`/`DEFAULT_QUALITY`
+   两个 **static** 常量，按序号反射会读错；已改为跳过静态字段（同时确认 `LootPool.rolls`
+   声明在 `bonusRolls` 之前，`LootDataManager.getKeys` 返回 `Collection`）。
+
+### 5.3 关于 `dist/randombox-1.0.0-dev.jar`
+
+它就是 `./gradlew build` 在 **reobf 之前**的产物：类文件按官方（Mojang）名字引用 Minecraft。
+1.20.1 的运行时使用 SRG 成员名，所以要投入实际游戏，仍需在能联网的机器上执行
+`./gradlew build`（ModDevGradle 会自动完成 Mojang → SRG 的重映射）。
+源码本身已经过真实 API 校验，无需再改动。
 
 ## 6. 代码结构
 
@@ -148,7 +190,7 @@ com.randombox
 ├── event/
 │   ├── BoxEvents           右键拦截、区块加载登记、每秒同步、指令注册
 │   └── ReelManager         进行中的抽奖、超时兜底、发奖与开容器
-├── net/                    6 个数据包（SimpleChannel）
+├── net/                    6 个数据包（SimpleChannel，net.minecraftforge.network）
 ├── command/RandomBoxCommand
 └── client/
     ├── ReelScreen          不可跳过的抽奖界面
@@ -156,3 +198,13 @@ com.randombox
     ├── ClientEvents        粒子 + 光柱
     └── ClientBoxCache / ClientPacketHandler / ClientSetup
 ```
+
+## 7. 工具脚本
+
+| 文件 | 作用 |
+|---|---|
+| `tools/build-sdk.sh` | 从 GitHub 拉取 MC / NeoForge / FML / EventBus / 库源码，生成编译期 SDK |
+| `tools/stubgen.py` | tree-sitter 源码 → 签名桩（保留类层次与签名，去掉方法体） |
+| `tools/mkplaceholders.py` | 为仅出现在签名中的第三方类型生成占位类型 |
+| `tools/sdkoverrides/` | 少量闭源/生成式库的手写桩（authlib `GameProfile`、distmarker `Dist`、fastutil `ObjectArrayList`…） |
+| `tools/offline-compile.sh` | 离线编译 + 打包 `dist/randombox-1.0.0-dev.jar` |
