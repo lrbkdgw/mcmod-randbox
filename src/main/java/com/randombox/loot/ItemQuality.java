@@ -129,41 +129,68 @@ public final class ItemQuality {
     }
 
     /**
-     * The built in table. The scale goes from {@code 0} to {@code 4} and only a small, hand picked
-     * set of items gets a value at all - everything that is not listed here stays at {@code 0}.
+     * The built in table. The scale is {@code 0 - 4} and only a hand picked set of items gets a
+     * value at all - everything that is not listed here stays at {@code 0}.
      *
      * <ul>
-     *   <li>4: unique end game items (dragon egg, nether star, enchanted golden apple, elytra, beacon)</li>
-     *   <li>3: netherite ingot, totem of undying, heart of the sea</li>
-     *   <li>2: wither skeleton skull, ancient debris, conduit, netherite gear / scrap / template,
-     *       diamond, emerald, shulker shell</li>
-     *   <li>1: enchanted book, trident, golden apple, horse armor, music discs, smithing templates</li>
+     *   <li>4: unique / end game (dragon egg, nether star, enchanted golden apple, elytra, beacon)</li>
+     *   <li>3: netherite ingot, totem of undying, heart of the sea, dragon head, diamond block ...</li>
+     *   <li>2: wither skeleton skull, ancient debris, conduit, netherite &amp; diamond gear,
+     *       diamond, emerald, shulker shell, mob heads, sniffer egg, sponge ...</li>
+     *   <li>1: enchanted book, trident, golden apple, horse armor, music discs, smithing
+     *       templates, pottery sherds, saddle, bell, blaze rod, ender pearl ...</li>
      * </ul>
      */
     private static void defaults() {
+        // ---- 4: unique, end game --------------------------------------------------------
         put(4, Items.DRAGON_EGG, Items.NETHER_STAR, Items.ENCHANTED_GOLDEN_APPLE, Items.ELYTRA,
                 Items.BEACON);
 
+        // ---- 3: legendary drops ---------------------------------------------------------
         put(3, Items.NETHERITE_INGOT, Items.TOTEM_OF_UNDYING, Items.HEART_OF_THE_SEA,
-                Items.DRAGON_HEAD);
+                Items.DRAGON_HEAD, Items.NETHERITE_BLOCK, Items.DIAMOND_BLOCK,
+                Items.MUSIC_DISC_PIGSTEP, Items.SNIFFER_EGG);
 
+        // ---- 2: rare ---------------------------------------------------------------------
         put(2, Items.WITHER_SKELETON_SKULL, Items.ANCIENT_DEBRIS, Items.CONDUIT,
                 Items.NETHERITE_SCRAP, Items.NETHERITE_UPGRADE_SMITHING_TEMPLATE,
                 Items.NETHERITE_SWORD, Items.NETHERITE_PICKAXE, Items.NETHERITE_AXE,
                 Items.NETHERITE_SHOVEL, Items.NETHERITE_HOE, Items.NETHERITE_HELMET,
                 Items.NETHERITE_CHESTPLATE, Items.NETHERITE_LEGGINGS, Items.NETHERITE_BOOTS,
-                Items.DIAMOND, Items.EMERALD, Items.SHULKER_SHELL,
-                Items.MUSIC_DISC_PIGSTEP, Items.ECHO_SHARD, Items.RECOVERY_COMPASS);
+                Items.DIAMOND, Items.EMERALD, Items.EMERALD_BLOCK, Items.SHULKER_SHELL,
+                Items.ECHO_SHARD, Items.RECOVERY_COMPASS,
+                Items.DIAMOND_SWORD, Items.DIAMOND_PICKAXE, Items.DIAMOND_AXE,
+                Items.DIAMOND_SHOVEL, Items.DIAMOND_HOE, Items.DIAMOND_HELMET,
+                Items.DIAMOND_CHESTPLATE, Items.DIAMOND_LEGGINGS, Items.DIAMOND_BOOTS,
+                Items.END_CRYSTAL, Items.DRAGON_BREATH, Items.NAUTILUS_SHELL,
+                Items.SKELETON_SKULL, Items.ZOMBIE_HEAD, Items.CREEPER_HEAD,
+                Items.SPONGE, Items.WET_SPONGE, Items.LODESTONE, Items.GOLD_BLOCK,
+                Items.NAME_TAG);
 
-        put(1, Items.ENCHANTED_BOOK, Items.TRIDENT, Items.GOLDEN_APPLE,
-                Items.LEATHER_HORSE_ARMOR, Items.IRON_HORSE_ARMOR, Items.GOLDEN_HORSE_ARMOR,
-                Items.DIAMOND_HORSE_ARMOR,
-                Items.MUSIC_DISC_13, Items.MUSIC_DISC_CAT, Items.MUSIC_DISC_BLOCKS,
+        // ---- 1: uncommon ------------------------------------------------------------------
+        put(1, Items.ENCHANTED_BOOK, Items.TRIDENT, Items.GOLDEN_APPLE, Items.EXPERIENCE_BOTTLE, Items.SADDLE, Items.BELL,
+                Items.SEA_LANTERN, Items.ENDER_EYE, Items.ENDER_PEARL, Items.BLAZE_ROD,
+                Items.GHAST_TEAR, Items.AMETHYST_SHARD, Items.GOLDEN_CARROT,
+                Items.GLISTERING_MELON_SLICE, Items.SPYGLASS, Items.CROSSBOW,
+                Items.SUSPICIOUS_STEW, Items.CRYING_OBSIDIAN, Items.GILDED_BLACKSTONE,
+                Items.IRON_BLOCK, Items.LAPIS_BLOCK, Items.OBSIDIAN, Items.GLOWSTONE,
+                Items.TNT, Items.GOLD_INGOT, Items.CAKE, Items.ENCHANTING_TABLE,
+                Items.CHAINMAIL_HELMET, Items.CHAINMAIL_CHESTPLATE, Items.CHAINMAIL_LEGGINGS,
+                Items.CHAINMAIL_BOOTS);
+
+        // horse armor
+        put(1, Items.LEATHER_HORSE_ARMOR, Items.IRON_HORSE_ARMOR, Items.GOLDEN_HORSE_ARMOR,
+                Items.DIAMOND_HORSE_ARMOR);
+
+        // music discs
+        put(1, Items.MUSIC_DISC_13, Items.MUSIC_DISC_CAT, Items.MUSIC_DISC_BLOCKS,
                 Items.MUSIC_DISC_CHIRP, Items.MUSIC_DISC_FAR, Items.MUSIC_DISC_MALL,
                 Items.MUSIC_DISC_MELLOHI, Items.MUSIC_DISC_STAL, Items.MUSIC_DISC_STRAD,
                 Items.MUSIC_DISC_WARD, Items.MUSIC_DISC_11, Items.MUSIC_DISC_WAIT,
-                Items.MUSIC_DISC_OTHERSIDE, Items.MUSIC_DISC_5, Items.DISC_FRAGMENT_5,
-                Items.COAST_ARMOR_TRIM_SMITHING_TEMPLATE, Items.DUNE_ARMOR_TRIM_SMITHING_TEMPLATE,
+                Items.MUSIC_DISC_OTHERSIDE, Items.MUSIC_DISC_5, Items.DISC_FRAGMENT_5);
+
+        // armor trim smithing templates
+        put(1, Items.COAST_ARMOR_TRIM_SMITHING_TEMPLATE, Items.DUNE_ARMOR_TRIM_SMITHING_TEMPLATE,
                 Items.EYE_ARMOR_TRIM_SMITHING_TEMPLATE, Items.HOST_ARMOR_TRIM_SMITHING_TEMPLATE,
                 Items.RAISER_ARMOR_TRIM_SMITHING_TEMPLATE, Items.RIB_ARMOR_TRIM_SMITHING_TEMPLATE,
                 Items.SENTRY_ARMOR_TRIM_SMITHING_TEMPLATE, Items.SHAPER_ARMOR_TRIM_SMITHING_TEMPLATE,
@@ -171,5 +198,14 @@ public final class ItemQuality {
                 Items.SPIRE_ARMOR_TRIM_SMITHING_TEMPLATE, Items.TIDE_ARMOR_TRIM_SMITHING_TEMPLATE,
                 Items.VEX_ARMOR_TRIM_SMITHING_TEMPLATE, Items.WARD_ARMOR_TRIM_SMITHING_TEMPLATE,
                 Items.WAYFINDER_ARMOR_TRIM_SMITHING_TEMPLATE, Items.WILD_ARMOR_TRIM_SMITHING_TEMPLATE);
+
+        // pottery sherds (archaeology finds)
+        put(1, Items.ANGLER_POTTERY_SHERD, Items.ARCHER_POTTERY_SHERD, Items.ARMS_UP_POTTERY_SHERD,
+                Items.BLADE_POTTERY_SHERD, Items.BREWER_POTTERY_SHERD, Items.BURN_POTTERY_SHERD,
+                Items.DANGER_POTTERY_SHERD, Items.EXPLORER_POTTERY_SHERD, Items.FRIEND_POTTERY_SHERD,
+                Items.HEART_POTTERY_SHERD, Items.HEARTBREAK_POTTERY_SHERD, Items.HOWL_POTTERY_SHERD,
+                Items.MINER_POTTERY_SHERD, Items.MOURNER_POTTERY_SHERD, Items.PLENTY_POTTERY_SHERD,
+                Items.PRIZE_POTTERY_SHERD, Items.SHEAF_POTTERY_SHERD, Items.SHELTER_POTTERY_SHERD,
+                Items.SKULL_POTTERY_SHERD, Items.SNORT_POTTERY_SHERD);
     }
 }
