@@ -1,0 +1,21 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="MIT"
+[[mods]]
+modId="randombox"
+version="${file.jarVersion}"
+displayName="Random Loot Box"
+authors="Arena.ai"
+description='''Turns unopened loot chests into an unskippable animated draw, with five rarity tiers and an in-game loot editor.'''
+[[dependencies.randombox]]
+modId="neoforge"
+mandatory=true
+versionRange="[47.1.0,)"
+ordering="NONE"
+side="BOTH"
+[[dependencies.randombox]]
+modId="minecraft"
+mandatory=true
+versionRange="[1.20.1,1.21)"
+ordering="NONE"
+side="BOTH"
