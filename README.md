@@ -90,11 +90,11 @@ Minecraft **Java 1.20.1 / NeoForge 47.x** 模组。把原版宝箱的「第一�
 
 * 设原表的战利品池总数为 `k`，则所有产出物品的堆叠数量 **× k/4**
   （`LootRoller#scaleCount`，小数部分按概率进位；可用 `scaleStackSizes` 关闭）。
-* 决定某个物品属于哪个池时，以**每个池各自的平均物品数量**为权重抽取
-  （`BoxLootTable.Pool#expectedItems` = 平均 rolls × 该池条目的平均堆叠数量）。
-  > 可用配置 `poolWeightMode` 切换：`"items"`（默认，平均物品数量）或 `"rolls"`
-  > （只按平均 rolls 次数）。如果某个大堆叠的廉价池（例如猪灵堡垒的金锭池）出现得过于频繁，
-  > 把它改成 `"rolls"` 即可让各池按 3 : 5 : 0.5 这样的 rolls 比例出现。
+* 决定某个物品属于哪个池时，以**原版该池的抽取次数（平均 rolls）**为权重
+  （`BoxLootTable.Pool#expectedItems`）。例如猪灵堡垒藏宝室的 rolls 为 3 / 5 / 0.5，
+  三个池贡献的物品比例就是 3 : 5 : 0.5（下界合金/钻石池 ≈ 3/8.5 ≈ 35%）。
+  > 配置 `poolWeightMode`：`"rolls"`（默认，原版抽取次数）/ `"items"`（再乘以平均堆叠数量）。
+  > 旧配置文件里遗留的 `"items"` 会在升级时自动迁移回 `"rolls"`（`configVersion` 字段）。
 * 池内再按上面的品质加权抽取条目。
 
 ### 转轮内容
@@ -178,7 +178,7 @@ Minecraft **Java 1.20.1 / NeoForge 47.x** 模组。把原版宝箱的「第一�
   "timeSpread": 0.5,
   "scaleStackSizes": true,
   "overrideQuality": true,     // 用物品固定 Quality 覆盖战利品表里的 quality
-  "poolWeightMode": "items",   // 选池权重："items" = 平均物品数量，"rolls" = 平均 rolls 次数
+  "poolWeightMode": "rolls",   // 选池权重："rolls" = 原版抽取次数，"items" = 再乘平均堆叠数量
   "effectRadius": 32,
   "beamRadius": 24
 }
