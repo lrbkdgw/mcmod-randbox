@@ -108,6 +108,12 @@ Minecraft **Java 1.20.1 / NeoForge 47.x** 模组。把原版宝箱的「第一�
 
 ## 5. 构建
 
+> **成品已经编译完成**：`dist/randombox-1.0.0.jar`（80 KB，49 个条目）
+> 由 GitHub Actions（`.github/workflows/build.yml`）用官方 ModDevGradle + Forge `1.20.1-47.1.3`
+> 工具链执行 `gradle build` 产出，已经过 `reobfJar` 重映射，**可以直接放进 `mods/` 进游戏**。
+> 每次推送后 CI 会把新的 jar 和完整构建日志（`ci-logs/build.log`）提交回分支。
+> 最近一次构建：`BUILD SUCCESSFUL in 3m 36s`，`:compileJava` / `:jar` / `:reobfJar` 全部通过，0 错误。
+
 ### 5.1 正常构建（推荐，需要联网到 maven.neoforged.net）
 
 工程使用官方 NeoForge 1.20.1 MDK 的工具链（`net.neoforged.moddev.legacyforge`，
@@ -167,12 +173,19 @@ Minecraft **Java 1.20.1 / NeoForge 47.x** 模组。把原版宝箱的「第一�
    两个 **static** 常量，按序号反射会读错；已改为跳过静态字段（同时确认 `LootPool.rolls`
    声明在 `bonusRolls` 之前，`LootDataManager.getKeys` 返回 `Collection`）。
 
-### 5.3 关于 `dist/randombox-1.0.0-dev.jar`
+### 5.3 离线产物 vs. 正式产物
 
-它就是 `./gradlew build` 在 **reobf 之前**的产物：类文件按官方（Mojang）名字引用 Minecraft。
-1.20.1 的运行时使用 SRG 成员名，所以要投入实际游戏，仍需在能联网的机器上执行
-`./gradlew build`（ModDevGradle 会自动完成 Mojang → SRG 的重映射）。
-源码本身已经过真实 API 校验，无需再改动。
+离线流水线产出的 `build/libs/randombox-1.0.0-dev.jar` 是 **reobf 之前**的产物：
+类文件按官方（Mojang）名字引用 Minecraft，而 1.20.1 运行时使用 SRG 成员名，因此它只用于验证编译。
+
+正式可用的产物是 CI 构建的 **`dist/randombox-1.0.0.jar`**，
+由 ModDevGradle 完成 Mojang → SRG 重映射（`:reobfJar`），可直接安装。
+
+### 5.4 CI
+
+`.github/workflows/build.yml`：checkout → JDK 17 → Gradle 8.8 → `gradle build`，
+成功后上传 `randombox-jar` artifact，并把 jar 复制到 `dist/`、把构建日志写入 `ci-logs/build.log`
+后以 `CI: build output [skip ci]` 提交回当前分支。
 
 ## 6. 代码结构
 
