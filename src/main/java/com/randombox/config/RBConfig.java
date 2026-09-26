@@ -36,14 +36,17 @@ public final class RBConfig {
     private static boolean overrideQuality = true;
     /**
      * How a pool is weighted when the item of a draw is picked:
-     * {@code items} = average amount of items of the pool (rolls * average stack size),
-     * {@code rolls} = average number of rolls only.
+     * {@code rolls} (default) = the average number of rolls the vanilla pool performs,
+     * {@code items} = that number multiplied with the average stack size of the pool.
      */
-    private static String poolWeightMode = "items";
+    private static String poolWeightMode = "rolls";
     /** Radius in which clients are told about unopened boxes (particles / beams). */
     private static int effectRadius = 32;
     /** Radius in which an unopened box shows its light beam. */
     private static int beamRadius = 24;
+
+    /** Bumped when a default changes so outdated values are migrated instead of kept. */
+    private static final int VERSION = 2;
 
     private RBConfig() {
     }
@@ -54,6 +57,7 @@ public final class RBConfig {
             if (Files.exists(file)) {
                 try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
                     JsonObject json = JsonParser.parseReader(reader).getAsJsonObject();
+                    int version = json.has("configVersion") ? json.get("configVersion").getAsInt() : 1;
                     rarityChances = readFloats(json, "rarityChances", rarityChances);
                     itemCounts = readInts(json, "itemCounts", itemCounts);
                     qualityFactors = readFloats(json, "qualityFactors", qualityFactors);
@@ -61,7 +65,12 @@ public final class RBConfig {
                     timeSpread = readFloat(json, "timeSpread", timeSpread);
                     scaleStackSizes = json.has("scaleStackSizes") ? json.get("scaleStackSizes").getAsBoolean() : scaleStackSizes;
                     overrideQuality = json.has("overrideQuality") ? json.get("overrideQuality").getAsBoolean() : overrideQuality;
-                    poolWeightMode = json.has("poolWeightMode") ? json.get("poolWeightMode").getAsString() : poolWeightMode;
+                    // "items" was the default of the very first version and made bulk pools
+                    // (gold ingots, blocks) swallow most draws, so old files are migrated.
+                    if (version >= VERSION) {
+                        poolWeightMode = json.has("poolWeightMode")
+                                ? json.get("poolWeightMode").getAsString() : poolWeightMode;
+                    }
                     effectRadius = json.has("effectRadius") ? json.get("effectRadius").getAsInt() : effectRadius;
                     beamRadius = json.has("beamRadius") ? json.get("beamRadius").getAsInt() : beamRadius;
                 }
@@ -76,6 +85,7 @@ public final class RBConfig {
         try {
             Files.createDirectories(file.getParent());
             JsonObject json = new JsonObject();
+            json.addProperty("configVersion", VERSION);
             json.add("rarityChances", GSON.toJsonTree(rarityChances));
             json.add("itemCounts", GSON.toJsonTree(itemCounts));
             json.add("qualityFactors", GSON.toJsonTree(qualityFactors));
@@ -160,9 +170,9 @@ public final class RBConfig {
         return overrideQuality;
     }
 
-    /** True while pools are weighted by their average item amount instead of their rolls. */
+    /** True while pools are weighted by their average item amount instead of their roll count. */
     public static boolean poolWeightUsesStackSize() {
-        return !"rolls".equalsIgnoreCase(poolWeightMode);
+        return "items".equalsIgnoreCase(poolWeightMode);
     }
 
     public static int effectRadius() {

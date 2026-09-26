@@ -131,12 +131,13 @@ public class BoxLootTable {
         }
 
         /**
-         * Average amount of items this pool hands out: {@code rolls * average stack size} of its
-         * entries. It is the weight used to pick the pool a drawn item comes from.
+         * Weight of this pool when the pool of a drawn item is picked: the average number of
+         * <em>rolls</em> the vanilla pool performs, i.e. how many draws the pool contributes to
+         * the chest. A table with {@code rolls} 3 / 5 / 0.5 therefore hands out items in exactly
+         * that ratio.
          *
-         * <p>With {@code poolWeightMode = "rolls"} in the config only the average number of rolls
-         * is used, which keeps pools of cheap bulk material (gold ingots, blocks) from swallowing
-         * most of the draws.
+         * <p>The optional config value {@code poolWeightMode = "items"} multiplies it with the
+         * average stack size of the pool instead.
          */
         public float expectedItems() {
             if (this.entries.isEmpty()) {

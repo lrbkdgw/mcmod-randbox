@@ -61,7 +61,7 @@ public final class ReelManager {
         // The same player opening the box again (disconnect, closed client, ...) simply gets the
         // very same lottery again - the result never changes and it can never be re-rolled.
         Pending own = PENDING.get(player.getUUID());
-        if (own != null && own.pos.equals(pos)) {
+        if (own != null && isSameBox(parts, own.pos)) {
             RBNetwork.toPlayer(player, new StartReelPacket(own.pos, own.rarity, own.reels,
                     own.durations, own.prizeIndices));
             return true;
@@ -129,10 +129,27 @@ public final class ReelManager {
         player.displayClientMessage(Component.translatable("randombox.message.cancelled"), true);
     }
 
+    /** True when one of the halves of the container the player clicked is that position. */
+    private static boolean isSameBox(List<RandomizableContainerBlockEntity> parts, BlockPos pos) {
+        for (RandomizableContainerBlockEntity part : parts) {
+            if (part.getBlockPos().equals(pos)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static void apply(ServerPlayer player, Pending pending, boolean openMenu) {
         ServerLevel level = player.serverLevel();
         List<RandomizableContainerBlockEntity> parts = parts(level, pending.pos);
         if (parts.isEmpty()) {
+            // The box is gone (broken, exploded, ...) while the animation was running: the prizes
+            // were already decided, so they go to the player instead of vanishing.
+            for (ItemStack prize : pending.prizes) {
+                if (!prize.isEmpty()) {
+                    player.getInventory().placeItemBackInInventory(prize.copy());
+                }
+            }
             return;
         }
 

@@ -156,8 +156,21 @@ public final class LootExtractor {
             case "tag" -> {
                 ResourceLocation tagId = new ResourceLocation(json.get("name").getAsString());
                 TagKey<Item> tag = TagKey.create(BuiltInRegistries.ITEM.key(), tagId);
+                java.util.List<Holder<Item>> holders = new java.util.ArrayList<>();
                 for (Holder<Item> holder : BuiltInRegistries.ITEM.getTagOrEmpty(tag)) {
-                    addJsonEntry(pool, holder.value(), weight, quality, json);
+                    holders.add(holder);
+                }
+                if (holders.isEmpty()) {
+                    return;
+                }
+                // "expand": true turns every item of the tag into an own entry with the full
+                // weight, "expand": false picks one random item of the tag for a single entry -
+                // then the weight has to be spread over the items so the tag does not become
+                // "size x weight" times more likely than it is in vanilla.
+                boolean expand = !json.has("expand") || json.get("expand").getAsBoolean();
+                int each = expand ? weight : Math.max(1, Math.round(weight / (float) holders.size()));
+                for (Holder<Item> holder : holders) {
+                    addJsonEntry(pool, holder.value(), each, quality, json);
                 }
             }
             case "alternatives", "group", "sequence" -> {
@@ -186,10 +199,22 @@ public final class LootExtractor {
                     // flatten every pool of the referenced table into the current pool
                     BoxLootTable temp = new BoxLootTable(nested);
                     readJson(element.getAsJsonObject(), temp, context, resolver, depth + 1);
+                    // The reference has one weight for the whole nested table, so its items share
+                    // that weight according to their own relative weights.
+                    int nestedTotal = 0;
+                    for (BoxLootTable.Pool nestedPool : temp.pools()) {
+                        for (BoxLootTable.Entry entry : nestedPool.entries()) {
+                            nestedTotal += Math.max(1, entry.weight());
+                        }
+                    }
+                    if (nestedTotal <= 0) {
+                        return;
+                    }
                     for (BoxLootTable.Pool nestedPool : temp.pools()) {
                         for (BoxLootTable.Entry entry : nestedPool.entries()) {
                             BoxLootTable.Entry copy = pool.addEntry(entry.item());
-                            copy.setWeight(Math.max(1, entry.weight() * Math.max(1, weight)));
+                            copy.setWeight(Math.max(1, Math.round(
+                                    Math.max(1, weight) * Math.max(1, entry.weight()) / (float) nestedTotal)));
                             copy.setQuality(Math.max(entry.quality(), quality));
                             copy.setMinCount(entry.minCount());
                             copy.setMaxCount(entry.maxCount());
