@@ -5,15 +5,15 @@ Daemon will be stopped at the end of the build
 Loaded 119 artifacts from /home/runner/work/mcmod-randbox/mcmod-randbox/build/tmp/createMinecraftArtifacts/nfrt_artifact_manifest.properties
   [33mWARNING: [0mde.oceanlabs.mcp:mcp_config:1.20.1-20230612.114412@zip is not present in the artifact manifest
 [1m*** Started working on [4mdownloadJson[0m[0m
- [1m[92m✓[0m Completed [4mdownloadJson[0m in 0.04s
+ [1m[92m✓[0m Completed [4mdownloadJson[0m in 0.03s
 [1m*** Started working on [4mdownloadServer[0m[0m
 [1m*** Started working on [4mdownloadClientMappings[0m[0m
 [1m*** Started working on [4mdownloadClient[0m[0m
+ [1m[92m✓[0m Completed [4mdownloadClientMappings[0m in 0.03s
+ [1m[92m✓[0m Completed [4mdownloadClient[0m in 0.03s
+ [1m[92m✓[0m Completed [4mdownloadServer[0m in 0.03s
 [1m*** Started working on [4mlistLibraries[0m[0m
  [1m[92m♻[0m Used cache of [4mlistLibraries[0m in 0.00s
- [1m[92m✓[0m Completed [4mdownloadClient[0m in 0.04s
- [1m[92m✓[0m Completed [4mdownloadServer[0m in 0.04s
- [1m[92m✓[0m Completed [4mdownloadClientMappings[0m in 0.04s
 [1m*** Started working on [4mmergeMappings[0m[0m
  [1m[92m♻[0m Used cache of [4mmergeMappings[0m in 0.00s
 [1m*** Started working on [4mcreateMappings[0m[0m
@@ -48,7 +48,7 @@ Loaded 119 artifacts from /home/runner/work/mcmod-randbox/mcmod-randbox/build/tm
  [1m[92m♻[0m Used cache of [4mrecompile[0m in 0.00s
 [1m*** Started working on [4msourcesAndCompiledWithNeoForge[0m[0m
  [1m[92m♻[0m Used cache of [4msourcesAndCompiledWithNeoForge[0m in 0.00s
-Total runtime: 2.50s
+Total runtime: 2.04s
 
 
 > Task :compileJava
@@ -67,7 +67,7 @@ Note: Recompile with -Xlint:deprecation for details.
 > Task :test NO-SOURCE
 > Task :check UP-TO-DATE
 > Task :build
-gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/build-1790409811623.json
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/build-1790424458361.json
 
-BUILD SUCCESSFUL in 25s
+BUILD SUCCESSFUL in 23s
 5 actionable tasks: 5 executed
