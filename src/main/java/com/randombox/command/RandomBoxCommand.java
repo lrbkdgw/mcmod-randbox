@@ -79,7 +79,7 @@ public final class RandomBoxCommand {
                 .then(Commands.argument("item", ResourceLocationArgument.id())
                         .suggests(ITEMS)
                         .executes(RandomBoxCommand::getQuality)
-                        .then(Commands.argument("value", IntegerArgumentType.integer(0, 100))
+                        .then(Commands.argument("value", IntegerArgumentType.integer(0, ItemQuality.MAX))
                                 .executes(RandomBoxCommand::setQuality)));
     }
 
