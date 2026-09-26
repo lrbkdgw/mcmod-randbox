@@ -42,10 +42,15 @@ Minecraft **Java 1.20.1 / NeoForge 47.x** 模组。把原版宝箱的「第一�
 
 ### 保留原有战利品列表
 
-模组不替换任何原版/数据包战利品表，而是**读取**它（`LootExtractor`，按字段*类型*反射，
-因此不依赖混淆名、也不需要 AccessTransformer），转换成内部模型：每个 pool 的条目、
-权重、quality、以及原版的 loot function（`compositeFunction`）都被保留，
-生成物品时仍会执行原版函数（附魔书、随机数量、药水等都正常）。
+模组不替换任何原版/数据包战利品表，而是**读取**它（`LootExtractor`）：
+先用原版的战利品表 Gson（`Deserializers.createLootTableSerializer()`）把 `LootTable`
+序列化成 JSON —— 也就是数据包里那份 json —— 再解析这份 JSON。
+这条路完全不依赖字段名 / 混淆映射 / AccessTransformer，并且能正确处理
+`item`、`tag`（自动展开标签内所有物品）、`alternatives` / `group` / `sequence`（递归展开子条目）、
+`loot_table`（递归解析被引用的表）等**全部条目类型**；
+`weight`、`quality`、`set_count` 的最小/最大数量都会被读出来，
+原版 loot function 也会用 `Deserializers.createFunctionSerializer()` 反序列化回来并合成执行
+（附魔书、随机数量、药水、损伤值等都正常）。旧的反射读取作为兜底保留。
 
 ### Quality 修复（固定物品品质）
 
@@ -80,6 +85,13 @@ Minecraft **Java 1.20.1 / NeoForge 47.x** 模组。把原版宝箱的「第一�
   （`BoxLootTable.Pool#expectedItems`）。
 * 池内再按上面的品质加权抽取条目。
 
+### 转轮内容
+
+* 每一列滚动的物品都是**该表真实可能产出的物品**，按与实际抽奖相同的权重
+  （`BaseWeight × (1 + Quality × factor)`）随机生成，所以飞过去的东西的比例≈真实概率。
+* 中奖物品**不在最后一格**：它后面还会再跟 2~5 个物品，看起来就像转轮停在了中间，
+  中奖位置由服务端随服务端下发（`StartReelPacket#prizeIndices`）。
+
 ### 抽奖时长
 
 每个物品平均 **1.2 秒，±50 % 浮动**（即 0.6 ~ 1.8 秒，服务端随机生成后下发）。
@@ -90,6 +102,9 @@ Minecraft **Java 1.20.1 / NeoForge 47.x** 模组。把原版宝箱的「第一�
 * 服务端每秒把玩家周围（默认 32 格）的箱子数据同步给客户端。
 * 客户端为每个箱子按稀有度颜色（白/绿/紫/黄/红）在四周环绕 `dust` 粒子。
 * **未开启过**的箱子在靠近时（默认 24 格）额外渲染一道信标式光柱（`BeaconRenderer.renderBeaconBeam`）。
+* 箱子被破坏后效果会立即消失：服务端监听 `BlockEvent.BreakEvent` 并在每次同步前校验方块是否还在
+  （爆炸、`/setblock` 等任何方式都能清掉），客户端渲染前也会再确认一次方块仍是容器，
+  不会再留下"鬼光柱"。
 
 ---
 
@@ -111,6 +126,8 @@ Minecraft **Java 1.20.1 / NeoForge 47.x** 模组。把原版宝箱的「第一�
   可添加、删除、翻页。所有输入框**即时写回数据模型**（输入即生效，翻页/切池不会丢失改动）。
 * `保存` 把整张表发回服务端，存为 `config/randombox/loot_tables/<id>.json`；
   之后开箱时**自定义表会覆盖同 id 的原版表**。`删除` 则移除覆盖，恢复原版。
+* **搜索不会抢焦点**：过滤时只更新列表按钮的文字与显示状态，不重建界面，
+  因此搜索后右侧的输入框照常可以点击和编辑。
 * **自适应布局**：左侧列表行数、右侧条目行数、各列宽度、按钮栏位置全部由当前窗口
   `width/height` 实时计算，并对过长的 ID / 文本做像素级裁剪，
   因此任何分辨率和 GUI 缩放下都不会有控件跑到屏幕外。
