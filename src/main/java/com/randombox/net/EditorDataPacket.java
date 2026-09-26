@@ -17,10 +17,21 @@ import net.minecraftforge.network.NetworkEvent;
 public class EditorDataPacket {
     private final List<BoxLootTable> tables;
     private final List<ResourceLocation> available;
+    /** Table the editor should select right away (freshly imported one), may be null. */
+    private final ResourceLocation focus;
 
     public EditorDataPacket(List<BoxLootTable> tables, List<ResourceLocation> available) {
+        this(tables, available, null);
+    }
+
+    public EditorDataPacket(List<BoxLootTable> tables, List<ResourceLocation> available, ResourceLocation focus) {
         this.tables = tables;
         this.available = available;
+        this.focus = focus;
+    }
+
+    public ResourceLocation focus() {
+        return this.focus;
     }
 
     public List<BoxLootTable> tables() {
@@ -40,6 +51,10 @@ public class EditorDataPacket {
         for (ResourceLocation id : packet.available) {
             buf.writeResourceLocation(id);
         }
+        buf.writeBoolean(packet.focus != null);
+        if (packet.focus != null) {
+            buf.writeResourceLocation(packet.focus);
+        }
     }
 
     public static EditorDataPacket decode(FriendlyByteBuf buf) {
@@ -53,7 +68,8 @@ public class EditorDataPacket {
         for (int i = 0; i < availableCount; i++) {
             available.add(buf.readResourceLocation());
         }
-        return new EditorDataPacket(tables, available);
+        ResourceLocation focus = buf.readBoolean() ? buf.readResourceLocation() : null;
+        return new EditorDataPacket(tables, available, focus);
     }
 
     public static void handle(EditorDataPacket packet, Supplier<NetworkEvent.Context> context) {

@@ -34,7 +34,11 @@ public class SaveTablePacket {
         NetworkEvent.Context ctx = context.get();
         ctx.enqueueWork(() -> {
             ServerPlayer player = ctx.getSender();
-            if (player == null || !player.hasPermissions(2)) {
+            if (player == null) {
+                return;
+            }
+            if (!player.hasPermissions(2)) {
+                player.sendSystemMessage(Component.translatable("randombox.editor.no_permission"));
                 return;
             }
             if (packet.delete) {

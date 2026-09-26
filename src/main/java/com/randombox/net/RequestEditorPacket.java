@@ -44,7 +44,12 @@ public class RequestEditorPacket {
         NetworkEvent.Context ctx = context.get();
         ctx.enqueueWork(() -> {
             ServerPlayer player = ctx.getSender();
-            if (player == null || !player.hasPermissions(2)) {
+            if (player == null) {
+                return;
+            }
+            if (!player.hasPermissions(2)) {
+                player.sendSystemMessage(net.minecraft.network.chat.Component
+                        .translatable("randombox.editor.no_permission"));
                 return;
             }
             ServerLevel level = player.serverLevel();
@@ -52,15 +57,20 @@ public class RequestEditorPacket {
             List<ResourceLocation> available = new ArrayList<>(level.getServer().getLootData()
                     .getKeys(net.minecraft.world.level.storage.loot.LootDataType.TABLE));
 
+            ResourceLocation focus = packet.importId;
             if (packet.importId != null && !CustomLootStore.has(packet.importId)) {
                 LootContext lootContext = LootRoller.createContext(level, BlockPos.ZERO, player);
                 LootTable vanilla = level.getServer().getLootData().getLootTable(packet.importId);
                 BoxLootTable imported = LootExtractor.extract(packet.importId, vanilla, lootContext);
-                if (!imported.isEmpty()) {
-                    tables.add(imported);
+                if (imported.isEmpty()) {
+                    // Unknown or unreadable table: hand out an empty skeleton so it can still be
+                    // filled in by hand instead of silently doing nothing.
+                    imported = new BoxLootTable(packet.importId);
+                    imported.addPool();
                 }
+                tables.add(imported);
             }
-            RBNetwork.toPlayer(player, new EditorDataPacket(tables, available));
+            RBNetwork.toPlayer(player, new EditorDataPacket(tables, available, focus));
         });
         ctx.setPacketHandled(true);
     }

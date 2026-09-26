@@ -27,9 +27,11 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.ChestType;
 
 /** Keeps track of the running lottery animations. */
 public final class ReelManager {
@@ -41,15 +43,28 @@ public final class ReelManager {
     /** @return true when a lottery was started and the vanilla interaction has to be cancelled. */
     public static boolean start(ServerPlayer player, BlockPos pos) {
         ServerLevel level = player.serverLevel();
-        BlockEntity blockEntity = level.getBlockEntity(pos);
-        if (!(blockEntity instanceof RandomizableContainerBlockEntity container)) {
+        List<RandomizableContainerBlockEntity> parts = parts(level, pos);
+        if (parts.isEmpty()) {
             return false;
         }
-        ResourceLocation tableId = lootTableOf(container);
+        ResourceLocation tableId = null;
+        for (RandomizableContainerBlockEntity part : parts) {
+            ResourceLocation id = lootTableOf(part);
+            if (id != null) {
+                tableId = id;
+                break;
+            }
+        }
         if (tableId == null) {
             return false;
         }
-        if (isLocked(level, pos)) {
+        boolean locked = false;
+        for (RandomizableContainerBlockEntity part : parts) {
+            if (isLocked(level, part.getBlockPos())) {
+                locked = true;
+            }
+        }
+        if (locked) {
             player.displayClientMessage(Component.translatable("randombox.message.busy"), true);
             return true;
         }
@@ -94,35 +109,45 @@ public final class ReelManager {
 
     private static void apply(ServerPlayer player, Pending pending, boolean openMenu) {
         ServerLevel level = player.serverLevel();
-        BlockEntity blockEntity = level.getBlockEntity(pending.pos);
-        if (!(blockEntity instanceof RandomizableContainerBlockEntity container)) {
+        List<RandomizableContainerBlockEntity> parts = parts(level, pending.pos);
+        if (parts.isEmpty()) {
             return;
         }
 
-        container.setLootTable(null, 0L);
-        List<Integer> slots = new ArrayList<>();
-        for (int i = 0; i < container.getContainerSize(); i++) {
-            if (container.getItem(i).isEmpty()) {
-                slots.add(i);
+        // Clearing the loot table of *every* half of the chest is important: otherwise the second
+        // half of a double chest would still unpack its own vanilla loot when the menu opens and
+        // the box would contain far more items than the rarity allows.
+        List<Slot> slots = new ArrayList<>();
+        for (RandomizableContainerBlockEntity part : parts) {
+            part.setLootTable(null, 0L);
+            for (int i = 0; i < part.getContainerSize(); i++) {
+                if (part.getItem(i).isEmpty()) {
+                    slots.add(new Slot(part, i));
+                }
             }
         }
+
         RandomSource random = level.getRandom();
         for (ItemStack prize : pending.prizes) {
             if (slots.isEmpty()) {
                 player.drop(prize.copy(), false);
                 continue;
             }
-            int index = random.nextInt(slots.size());
-            container.setItem(slots.remove(index), prize.copy());
+            Slot slot = slots.remove(random.nextInt(slots.size()));
+            slot.container().setItem(slot.index(), prize.copy());
         }
-        container.setChanged();
-        level.sendBlockUpdated(pending.pos, level.getBlockState(pending.pos), level.getBlockState(pending.pos), 3);
 
         BoxSavedData saved = BoxSavedData.get(level);
-        BoxData data = saved.get(pending.pos);
-        if (data != null) {
-            data.setOpened(true);
-            saved.setDirty();
+        for (RandomizableContainerBlockEntity part : parts) {
+            part.setChanged();
+            BlockPos partPos = part.getBlockPos();
+            BlockState partState = level.getBlockState(partPos);
+            level.sendBlockUpdated(partPos, partState, partState, 3);
+            BoxData data = saved.get(partPos);
+            if (data != null) {
+                data.setOpened(true);
+                saved.setDirty();
+            }
         }
 
         player.sendSystemMessage(Component.translatable("randombox.message.result",
@@ -171,6 +196,38 @@ public final class ReelManager {
             }
         }
         return false;
+    }
+
+    /** The container itself plus, for a double chest, its other half. */
+    public static List<RandomizableContainerBlockEntity> parts(ServerLevel level, BlockPos pos) {
+        List<RandomizableContainerBlockEntity> parts = new ArrayList<>();
+        BlockEntity blockEntity = level.getBlockEntity(pos);
+        if (!(blockEntity instanceof RandomizableContainerBlockEntity container)) {
+            return parts;
+        }
+        parts.add(container);
+        BlockState state = level.getBlockState(pos);
+        if (state.getBlock() instanceof ChestBlock && state.hasProperty(ChestBlock.TYPE)
+                && state.getValue(ChestBlock.TYPE) != ChestType.SINGLE) {
+            BlockPos other = pos.relative(ChestBlock.getConnectedDirection(state));
+            if (level.getBlockEntity(other) instanceof RandomizableContainerBlockEntity second) {
+                parts.add(second);
+            }
+        }
+        return parts;
+    }
+
+    /** True when this block (or the other half of the double chest) still holds a loot table. */
+    public static boolean hasLootTable(ServerLevel level, BlockPos pos) {
+        for (RandomizableContainerBlockEntity part : parts(level, pos)) {
+            if (lootTableOf(part) != null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private record Slot(RandomizableContainerBlockEntity container, int index) {
     }
 
     public static ResourceLocation lootTableOf(RandomizableContainerBlockEntity container) {

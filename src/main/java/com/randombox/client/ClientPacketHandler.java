@@ -32,6 +32,6 @@ public final class ClientPacketHandler {
 
     public static void handleEditorData(EditorDataPacket packet) {
         Minecraft minecraft = Minecraft.getInstance();
-        minecraft.setScreen(new LootEditorScreen(packet.tables(), packet.available()));
+        minecraft.setScreen(new LootEditorScreen(packet.tables(), packet.available(), packet.focus()));
     }
 }

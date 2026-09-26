@@ -53,10 +53,10 @@ public class BoxEvents {
         }
         BlockPos pos = event.getPos();
         BlockEntity blockEntity = event.getLevel().getBlockEntity(pos);
-        if (!(blockEntity instanceof RandomizableContainerBlockEntity container)) {
+        if (!(blockEntity instanceof RandomizableContainerBlockEntity)) {
             return;
         }
-        if (ReelManager.lootTableOf(container) == null) {
+        if (!ReelManager.hasLootTable(player.serverLevel(), pos)) {
             return;
         }
         if (ReelManager.start(player, pos)) {

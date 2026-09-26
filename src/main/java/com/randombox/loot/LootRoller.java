@@ -68,15 +68,36 @@ public final class LootRoller {
         RandomSource random = level.getRandom();
         Result result = new Result();
 
+        int wanted = Math.max(1, RBConfig.itemCount(rarity));
+
         if (model.isEmpty()) {
-            // Nothing we can read: fall back to the untouched vanilla roll.
+            // Nothing we can read from the table: fall back to repeated vanilla rolls, but still
+            // hand out exactly the amount of items the rarity asks for.
             LootTable vanilla = level.getServer().getLootData().getLootTable(tableId);
-            List<ItemStack> items = vanilla.getRandomItems(createParams(level, pos, player));
-            for (ItemStack stack : items) {
-                if (!stack.isEmpty()) {
-                    result.prizes.add(stack);
+            List<ItemStack> drawn = new ArrayList<>();
+            for (int attempt = 0; attempt < 32 && drawn.size() < wanted; attempt++) {
+                List<ItemStack> items = vanilla.getRandomItems(createParams(level, pos, player));
+                boolean any = false;
+                for (ItemStack stack : items) {
+                    if (!stack.isEmpty()) {
+                        drawn.add(stack);
+                        any = true;
+                    }
+                }
+                if (!any && attempt > 4) {
+                    break;
                 }
             }
+            if (drawn.isEmpty()) {
+                return result;
+            }
+            while (drawn.size() > wanted) {
+                drawn.remove(random.nextInt(drawn.size()));
+            }
+            while (drawn.size() < wanted) {
+                drawn.add(drawn.get(random.nextInt(drawn.size())).copy());
+            }
+            result.prizes.addAll(drawn);
             for (ItemStack prize : result.prizes) {
                 result.reels.add(fallbackReel(prize, result.prizes, random));
             }
@@ -84,13 +105,19 @@ public final class LootRoller {
         }
 
         float countMultiplier = Math.max(0.05F, model.poolCount() / 4.0F);
-        int wanted = RBConfig.itemCount(rarity);
         int guard = 0;
-        while (result.prizes.size() < wanted && guard++ < wanted * 40) {
+        while (result.prizes.size() < wanted && guard++ < wanted * 64) {
             ItemStack stack = drawOne(model, rarity, context, random, countMultiplier);
             if (stack != null && !stack.isEmpty()) {
                 result.prizes.add(stack);
             }
+        }
+        // Never hand out less than the rarity promises: pad with copies of what was drawn.
+        while (result.prizes.size() < wanted && !result.prizes.isEmpty()) {
+            result.prizes.add(result.prizes.get(random.nextInt(result.prizes.size())).copy());
+        }
+        while (result.prizes.size() > wanted) {
+            result.prizes.remove(result.prizes.size() - 1);
         }
 
         for (ItemStack prize : result.prizes) {
