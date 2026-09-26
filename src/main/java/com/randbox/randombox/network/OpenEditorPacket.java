@@ -1,0 +1,3 @@
+package com.randbox.randombox.network;
+import com.randbox.randombox.client.EditorScreen;import net.minecraft.network.FriendlyByteBuf;import net.minecraftforge.api.distmarker.Dist;import net.minecraftforge.fml.DistExecutor;import net.minecraftforge.network.NetworkEvent;import java.util.function.Supplier;
+public final class OpenEditorPacket {public static void encode(OpenEditorPacket p,FriendlyByteBuf b){}public static OpenEditorPacket decode(FriendlyByteBuf b){return new OpenEditorPacket();}public static void handle(OpenEditorPacket p,Supplier<NetworkEvent.Context>s){s.get().enqueueWork(()->DistExecutor.unsafeRunWhenOn(Dist.CLIENT,()->()->EditorScreen.open()));s.get().setPacketHandled(true);}}
