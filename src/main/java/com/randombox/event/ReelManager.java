@@ -13,6 +13,7 @@ import com.randombox.data.BoxData;
 import com.randombox.enchantment.RandomBoxEnchantments;
 import com.randombox.data.BoxSavedData;
 import com.randombox.loot.LootRoller;
+import com.randombox.net.PreviewLootPacket;
 import com.randombox.net.RBNetwork;
 import com.randombox.net.StartReelPacket;
 
@@ -26,6 +27,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.ChestBlock;
@@ -37,6 +39,8 @@ import net.minecraft.world.level.block.state.properties.ChestType;
 /** Keeps track of the running lottery animations. */
 public final class ReelManager {
     private static final Map<UUID, Pending> PENDING = new HashMap<>();
+    private static final Map<UUID, PreviewToken> PREVIEWS = new HashMap<>();
+    private static final long PREVIEW_TIMEOUT = 600L;
 
     private ReelManager() {
     }
@@ -80,11 +84,18 @@ public final class ReelManager {
 
         BoxSavedData saved = BoxSavedData.get(level);
         RandomSource random = level.getRandom();
-        BoxData data = saved.getOrCreate(pos, tableId, random);
+        BoxData data = dataForBox(saved, parts, pos, tableId, random);
         data.setLootTable(tableId);
-        Rarity rarity = RandomBoxEnchantments.maybeAscend(data.rarity(), player, random);
+        if (data.hasCachedPrizes()) {
+            data.setAscensionFixed(true);
+            saved.setDirty();
+        }
+        Rarity rarity = effectiveRarity(saved, data, player, random);
+        mirrorBoxData(saved, parts, data, random);
 
-        LootRoller.Result rolled = LootRoller.roll(level, pos, player, tableId, rarity);
+        LootRoller.Result rolled = data.hasCachedPrizes()
+                ? LootRoller.fixed(level, pos, player, tableId, rarity, data.cachedPrizes())
+                : LootRoller.roll(level, pos, player, tableId, rarity);
         if (rolled.prizes.isEmpty()) {
             return false;
         }
@@ -109,6 +120,89 @@ public final class ReelManager {
         return true;
     }
 
+    /** Preview a box with a Warden Tentacle and allow one server-authorised reroll. */
+    public static boolean preview(ServerPlayer player, BlockPos pos, InteractionHand hand, ItemStack tool) {
+        ServerLevel level = player.serverLevel();
+        List<RandomizableContainerBlockEntity> parts = parts(level, pos);
+        if (parts.isEmpty()) {
+            return false;
+        }
+        ResourceLocation tableId = firstLootTable(parts);
+        if (tableId == null) {
+            return false;
+        }
+        for (RandomizableContainerBlockEntity part : parts) {
+            if (isLocked(level, part.getBlockPos())) {
+                player.displayClientMessage(Component.translatable("randombox.message.busy"), true);
+                return true;
+            }
+        }
+
+        BoxSavedData saved = BoxSavedData.get(level);
+        RandomSource random = level.getRandom();
+        BoxData data = dataForBox(saved, parts, pos, tableId, random);
+        data.setLootTable(tableId);
+        Rarity rarity = effectiveRarity(saved, data, player, random);
+        // A preview fixes the seen result for the box. If Treasure Ascension was not worn, that
+        // "no ascension" outcome is fixed too, so later ESC/reopen or another player cannot alter it.
+        data.setAscensionFixed(true);
+        saved.setDirty();
+        if (!data.hasCachedPrizes()) {
+            LootRoller.Result rolled = LootRoller.roll(level, pos, player, tableId, rarity);
+            if (rolled.prizes.isEmpty()) {
+                return false;
+            }
+            data.setCachedPrizes(rolled.prizes);
+            saved.setDirty();
+        }
+        mirrorBoxData(saved, parts, data, random);
+
+        if (!player.getAbilities().instabuild) {
+            tool.hurtAndBreak(1, player, p -> p.broadcastBreakEvent(hand));
+        }
+        PREVIEWS.put(player.getUUID(), new PreviewToken(pos.immutable(), level.getGameTime() + PREVIEW_TIMEOUT));
+        RBNetwork.toPlayer(player, new PreviewLootPacket(pos, rarity, data.cachedPrizes(), true));
+        level.playSound(null, pos, SoundEvents.SCULK_CLICKING, SoundSource.PLAYERS, 0.6F, 1.0F);
+        return true;
+    }
+
+    /** Client response from the preview screen. */
+    public static void previewChoice(ServerPlayer player, BlockPos pos, boolean reroll) {
+        PreviewToken token = PREVIEWS.get(player.getUUID());
+        if (token == null || !token.pos.equals(pos)) {
+            return;
+        }
+        PREVIEWS.remove(player.getUUID());
+        if (!reroll) {
+            return;
+        }
+
+        ServerLevel level = player.serverLevel();
+        List<RandomizableContainerBlockEntity> parts = parts(level, pos);
+        if (parts.isEmpty()) {
+            return;
+        }
+        ResourceLocation tableId = firstLootTable(parts);
+        if (tableId == null) {
+            return;
+        }
+        BoxSavedData saved = BoxSavedData.get(level);
+        RandomSource random = level.getRandom();
+        BoxData data = dataForBox(saved, parts, pos, tableId, random);
+        data.setLootTable(tableId);
+        data.setAscensionFixed(true);
+        Rarity rarity = effectiveRarity(saved, data, player, random);
+        LootRoller.Result rolled = LootRoller.roll(level, pos, player, tableId, rarity);
+        if (rolled.prizes.isEmpty()) {
+            return;
+        }
+        data.setCachedPrizes(rolled.prizes);
+        saved.setDirty();
+        mirrorBoxData(saved, parts, data, random);
+        RBNetwork.toPlayer(player, new PreviewLootPacket(pos, rarity, data.cachedPrizes(), false));
+        level.playSound(null, pos, SoundEvents.SCULK_SHRIEKER_SHRIEK, SoundSource.PLAYERS, 0.35F, 1.4F);
+    }
+
     public static void finish(ServerPlayer player, BlockPos pos) {
         Pending pending = PENDING.get(player.getUUID());
         if (pending == null || !pending.pos.equals(pos)) {
@@ -119,8 +213,8 @@ public final class ReelManager {
     }
 
     /**
-     * The player aborted the lottery with Esc: throw the draw away. Nothing is handed out and the
-     * box stays untouched, so opening it again simply starts a new lottery.
+     * The player aborted the lottery with Esc: nothing is handed out and the box stays untouched.
+     * A Warden Tentacle preview, or the once-per-box Treasure Ascension roll, remains saved.
      */
     public static void cancel(ServerPlayer player, BlockPos pos) {
         Pending pending = PENDING.get(player.getUUID());
@@ -129,6 +223,62 @@ public final class ReelManager {
         }
         PENDING.remove(player.getUUID());
         player.displayClientMessage(Component.translatable("randombox.message.cancelled"), true);
+    }
+
+    private static ResourceLocation firstLootTable(List<RandomizableContainerBlockEntity> parts) {
+        for (RandomizableContainerBlockEntity part : parts) {
+            ResourceLocation id = lootTableOf(part);
+            if (id != null) {
+                return id;
+            }
+        }
+        return null;
+    }
+
+    private static BoxData dataForBox(BoxSavedData saved, List<RandomizableContainerBlockEntity> parts,
+                                      BlockPos clicked, ResourceLocation tableId, RandomSource random) {
+        BoxData fallback = saved.getOrCreate(clicked, tableId, random);
+        BoxData ascended = null;
+        for (RandomizableContainerBlockEntity part : parts) {
+            BoxData data = saved.get(part.getBlockPos());
+            if (data == null) {
+                continue;
+            }
+            if (data.hasCachedPrizes()) {
+                return data;
+            }
+            if (ascended == null && data.ascensionFixed()) {
+                ascended = data;
+            }
+        }
+        return ascended == null ? fallback : ascended;
+    }
+
+    private static void mirrorBoxData(BoxSavedData saved, List<RandomizableContainerBlockEntity> parts,
+                                      BoxData source, RandomSource random) {
+        for (RandomizableContainerBlockEntity part : parts) {
+            BoxData target = saved.getOrCreate(part.getBlockPos(), source.lootTable(), random);
+            target.setLootTable(source.lootTable());
+            target.setRarity(source.rarity());
+            target.setAscensionFixed(source.ascensionFixed());
+            target.setOpened(source.opened());
+            if (source.hasCachedPrizes()) {
+                target.setCachedPrizes(source.cachedPrizes());
+            } else {
+                target.clearCachedPrizes();
+            }
+        }
+        saved.setDirty();
+    }
+
+    /** Rolls Treasure Ascension at most once for this box and stores that result immediately. */
+    private static Rarity effectiveRarity(BoxSavedData saved, BoxData data, ServerPlayer player, RandomSource random) {
+        if (!data.ascensionFixed() && RandomBoxEnchantments.hasTreasureAscension(player)) {
+            data.setRarity(RandomBoxEnchantments.maybeAscend(data.rarity(), player, random));
+            data.setAscensionFixed(true);
+            saved.setDirty();
+        }
+        return data.rarity();
     }
 
     /** True when one of the halves of the container the player clicked is that position. */
@@ -145,13 +295,9 @@ public final class ReelManager {
         ServerLevel level = player.serverLevel();
         List<RandomizableContainerBlockEntity> parts = parts(level, pending.pos);
         if (parts.isEmpty()) {
-            // The box is gone (broken, exploded, ...) while the animation was running: the prizes
-            // were already decided, so they go to the player instead of vanishing.
-            for (ItemStack prize : pending.prizes) {
-                if (!prize.isEmpty()) {
-                    player.getInventory().placeItemBackInInventory(prize.copy());
-                }
-            }
+            // The unopened loot container was broken before the animation could apply. Match
+            // vanilla unopened loot boxes: no rolled or unrolled loot is dropped or handed out.
+            BoxSavedData.get(level).remove(pending.pos);
             return;
         }
 
@@ -187,6 +333,7 @@ public final class ReelManager {
             BoxData data = saved.get(partPos);
             if (data != null) {
                 data.setRarity(pending.rarity);
+                data.clearCachedPrizes();
                 data.setOpened(true);
                 saved.setDirty();
             }
@@ -210,6 +357,7 @@ public final class ReelManager {
 
     /** Applies the loot of animations whose client never answered (disconnect, crash, ...). */
     public static void tick(MinecraftServer server) {
+        expirePreviewTokens(server);
         if (PENDING.isEmpty()) {
             return;
         }
@@ -231,6 +379,22 @@ public final class ReelManager {
         }
     }
 
+    private static void expirePreviewTokens(MinecraftServer server) {
+        if (PREVIEWS.isEmpty()) {
+            return;
+        }
+        List<UUID> expired = new ArrayList<>();
+        for (Map.Entry<UUID, PreviewToken> entry : PREVIEWS.entrySet()) {
+            ServerPlayer player = server.getPlayerList().getPlayer(entry.getKey());
+            if (player == null || player.serverLevel().getGameTime() > entry.getValue().deadline) {
+                expired.add(entry.getKey());
+            }
+        }
+        for (UUID id : expired) {
+            PREVIEWS.remove(id);
+        }
+    }
+
     public static boolean isLocked(ServerLevel level, BlockPos pos) {
         for (Pending pending : PENDING.values()) {
             if (pending.pos.equals(pos)) {
@@ -238,6 +402,19 @@ public final class ReelManager {
             }
         }
         return false;
+    }
+
+    /** Forget running animations for a loot box that is being broken. */
+    public static void cancelForBrokenBox(ServerLevel level, BlockPos pos) {
+        List<BlockPos> positions = new ArrayList<>();
+        for (RandomizableContainerBlockEntity part : parts(level, pos)) {
+            positions.add(part.getBlockPos());
+        }
+        if (positions.isEmpty()) {
+            positions.add(pos.immutable());
+        }
+        PENDING.entrySet().removeIf(entry -> positions.contains(entry.getValue().pos));
+        PREVIEWS.entrySet().removeIf(entry -> positions.contains(entry.getValue().pos));
     }
 
     /** The container itself plus, for a double chest, its other half. */
@@ -286,5 +463,8 @@ public final class ReelManager {
     private record Pending(BlockPos pos, Rarity rarity, List<ItemStack> prizes, long deadline,
                            List<List<ItemStack>> reels, List<Float> durations,
                            List<Integer> prizeIndices) {
+    }
+
+    private record PreviewToken(BlockPos pos, long deadline) {
     }
 }

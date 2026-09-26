@@ -9,6 +9,15 @@
   "enchantment.randombox.quick_treasure": "Quick Treasure",
   "enchantment.randombox.treasure_deep_dig": "Treasure Deep Digging",
   "enchantment.randombox.treasure_ascension": "Treasure Ascension",
+  "item.randombox.warden_tentacle": "Warden Tentacle",
+
+  "randombox.preview.title": "Box Preview",
+  "randombox.preview.heading": "%s Box Preview",
+  "randombox.preview.hint": "The current lottery result is fixed. Keep it, or spend this preview's reroll once.",
+  "randombox.preview.rerolled": "The new lottery result has been saved and will be used when the box is opened.",
+  "randombox.preview.keep": "Keep Result",
+  "randombox.preview.reroll": "Reroll Result",
+  "randombox.preview.close": "Close",
 
   "randombox.screen.reel": "Box Lottery",
   "randombox.screen.title": "%s Box",

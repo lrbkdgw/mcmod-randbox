@@ -103,16 +103,7 @@ public final class LootRoller {
                 drawn.add(drawn.get(random.nextInt(drawn.size())).copy());
             }
             result.prizes.addAll(drawn);
-            for (ItemStack prize : result.prizes) {
-                int index = prizeIndex(random);
-                List<ItemStack> reel = new ArrayList<>();
-                for (int i = 0; i < REEL_LENGTH; i++) {
-                    reel.add(result.prizes.get(random.nextInt(result.prizes.size())).copy());
-                }
-                reel.set(index, prize.copy());
-                result.reels.add(reel);
-                result.prizeIndices.add(index);
-            }
+            buildReels(result, null, rarity, context, random, 1.0F);
             return result;
         }
 
@@ -134,18 +125,49 @@ public final class LootRoller {
 
         // Every reel scrolls through the items that this table can actually produce, drawn with
         // the same weights as the prize itself, so what flies by mirrors the real chances.
+        buildReels(result, model, rarity, context, random, countMultiplier);
+        return result;
+    }
+
+    /** Builds a lottery animation around prizes that were already fixed by a preview. */
+    public static Result fixed(ServerLevel level, BlockPos pos, Player player, ResourceLocation tableId,
+                               Rarity rarity, List<ItemStack> prizes) {
+        LootContext context = createContext(level, pos, player);
+        BoxLootTable model = model(level, tableId, context);
+        RandomSource random = level.getRandom();
+        Result result = new Result();
+        for (ItemStack prize : prizes) {
+            if (!prize.isEmpty()) {
+                result.prizes.add(prize.copy());
+            }
+        }
+        if (result.prizes.isEmpty()) {
+            return result;
+        }
+        float countMultiplier = model.isEmpty() ? 1.0F : Math.max(0.05F, model.poolCount() / 4.0F);
+        buildReels(result, model.isEmpty() ? null : model, rarity, context, random, countMultiplier);
+        return result;
+    }
+
+    private static void buildReels(Result result, BoxLootTable model, Rarity rarity, LootContext context,
+                                   RandomSource random, float countMultiplier) {
         for (ItemStack prize : result.prizes) {
             List<ItemStack> reel = new ArrayList<>();
             for (int i = 0; i < REEL_LENGTH; i++) {
-                ItemStack filler = drawOne(model, rarity, context, random, countMultiplier);
-                reel.add(filler == null || filler.isEmpty() ? prize.copy() : filler);
+                ItemStack filler = ItemStack.EMPTY;
+                if (model != null && !model.isEmpty()) {
+                    filler = drawOne(model, rarity, context, random, countMultiplier);
+                }
+                if (filler == null || filler.isEmpty()) {
+                    filler = result.prizes.get(random.nextInt(result.prizes.size())).copy();
+                }
+                reel.add(filler);
             }
             int index = prizeIndex(random);
             reel.set(index, prize.copy());
             result.reels.add(reel);
             result.prizeIndices.add(index);
         }
-        return result;
     }
 
     private static LootParams createParams(ServerLevel level, BlockPos pos, Player player) {

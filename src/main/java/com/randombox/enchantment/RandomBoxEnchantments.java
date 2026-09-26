@@ -74,9 +74,13 @@ public final class RandomBoxEnchantments {
         return Math.max(0, Math.min(2, deepDigLevel(player)));
     }
 
+    public static boolean hasTreasureAscension(Player player) {
+        return treasureAscensionLevel(player) > 0;
+    }
+
     /** 15% chance to raise a non-mythic box by one rarity while Treasure Ascension is worn. */
     public static Rarity maybeAscend(Rarity rarity, Player player, RandomSource random) {
-        if (rarity == null || rarity == Rarity.MYTHIC || treasureAscensionLevel(player) <= 0) {
+        if (rarity == null || rarity == Rarity.MYTHIC || !hasTreasureAscension(player)) {
             return rarity;
         }
         if (random.nextFloat() >= 0.15F) {

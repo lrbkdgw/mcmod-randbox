@@ -9,6 +9,15 @@
   "enchantment.randombox.quick_treasure": "快速寻宝",
   "enchantment.randombox.treasure_deep_dig": "宝藏深掘",
   "enchantment.randombox.treasure_ascension": "宝藏升华",
+  "item.randombox.warden_tentacle": "监守者触角",
+
+  "randombox.preview.title": "宝箱预览",
+  "randombox.preview.heading": "%s 宝箱预览",
+  "randombox.preview.hint": "已固定当前抽奖结果。可以保留，或消耗本次预览机会重抽一次。",
+  "randombox.preview.rerolled": "新的抽奖结果已保存。下次开箱会使用该结果。",
+  "randombox.preview.keep": "保留结果",
+  "randombox.preview.reroll": "重抽结果",
+  "randombox.preview.close": "关闭",
 
   "randombox.screen.reel": "宝箱抽奖",
   "randombox.screen.title": "%s 宝箱",

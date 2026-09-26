@@ -11,7 +11,8 @@ import net.minecraftforge.network.NetworkEvent;
 
 /**
  * Client -> server: the player pressed Esc, the lottery is aborted. No prize is handed out and the
- * box keeps its loot table, so it can be opened (and drawn) again later.
+ * box keeps its loot table, so it can be opened again later. Any persisted preview / ascension
+ * state of that box is kept.
  */
 public class CancelReelPacket {
     private final BlockPos pos;
