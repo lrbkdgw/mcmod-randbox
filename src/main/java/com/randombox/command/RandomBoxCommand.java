@@ -13,6 +13,7 @@ import com.randombox.data.BoxData;
 import com.randombox.data.BoxSavedData;
 import com.randombox.loot.BoxLootTable;
 import com.randombox.loot.CustomLootStore;
+import com.randombox.loot.ItemQuality;
 import com.randombox.net.EditorDataPacket;
 import com.randombox.net.RBNetwork;
 
@@ -29,10 +30,16 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.storage.loot.LootDataType;
 
 /** {@code /RandomBox SetNewBox <pos> <quality> <lootTable>} and {@code /RandomBox GUI}. */
 public final class RandomBoxCommand {
+    private static final SuggestionProvider<CommandSourceStack> ITEMS = (context, builder) ->
+            SharedSuggestionProvider.suggestResource(BuiltInRegistries.ITEM.keySet(), builder);
+
     private static final SuggestionProvider<CommandSourceStack> LOOT_TABLES = (context, builder) ->
             SharedSuggestionProvider.suggestResource(allTables(context), builder);
 
@@ -61,7 +68,49 @@ public final class RandomBoxCommand {
                                                 .suggests(LOOT_TABLES)
                                                 .executes(RandomBoxCommand::setNewBox)))))
                 .then(Commands.literal("GUI").executes(RandomBoxCommand::openGui))
-                .then(Commands.literal("gui").executes(RandomBoxCommand::openGui));
+                .then(Commands.literal("gui").executes(RandomBoxCommand::openGui))
+                .then(quality("Quality"))
+                .then(quality("quality"));
+    }
+
+    /** {@code /RandomBox Quality <item> [value]} reads or sets the fixed quality of an item. */
+    private static LiteralArgumentBuilder<CommandSourceStack> quality(String name) {
+        return Commands.literal(name)
+                .then(Commands.argument("item", ResourceLocationArgument.id())
+                        .suggests(ITEMS)
+                        .executes(RandomBoxCommand::getQuality)
+                        .then(Commands.argument("value", IntegerArgumentType.integer(0, 100))
+                                .executes(RandomBoxCommand::setQuality)));
+    }
+
+    private static Item item(CommandContext<CommandSourceStack> context) {
+        ResourceLocation id = ResourceLocationArgument.getId(context, "item");
+        return BuiltInRegistries.ITEM.get(id);
+    }
+
+    private static int getQuality(CommandContext<CommandSourceStack> context) {
+        Item item = item(context);
+        if (item == Items.AIR) {
+            context.getSource().sendFailure(Component.translatable("randombox.command.unknown_item"));
+            return 0;
+        }
+        int value = ItemQuality.get(item);
+        context.getSource().sendSuccess(() -> Component.translatable("randombox.command.quality_get",
+                item.getDescription(), value), false);
+        return value;
+    }
+
+    private static int setQuality(CommandContext<CommandSourceStack> context) {
+        Item item = item(context);
+        if (item == Items.AIR) {
+            context.getSource().sendFailure(Component.translatable("randombox.command.unknown_item"));
+            return 0;
+        }
+        int value = IntegerArgumentType.getInteger(context, "value");
+        ItemQuality.set(item, value);
+        context.getSource().sendSuccess(() -> Component.translatable("randombox.command.quality_set",
+                item.getDescription(), value), true);
+        return 1;
     }
 
     private static int setNewBox(CommandContext<CommandSourceStack> context) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
@@ -99,6 +148,9 @@ public final class RandomBoxCommand {
             return 0;
         }
         List<BoxLootTable> tables = new ArrayList<>(CustomLootStore.all());
+        for (BoxLootTable table : tables) {
+            table.applyItemQuality();
+        }
         List<ResourceLocation> available = new ArrayList<>(allTables(source));
         RBNetwork.toPlayer(player, new EditorDataPacket(tables, available));
         return 1;

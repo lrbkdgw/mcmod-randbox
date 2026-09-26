@@ -52,6 +52,19 @@ public class BoxLootTable {
         return true;
     }
 
+    /**
+     * Writes the fixed quality of every item into the matching entry (see {@link ItemQuality}).
+     * Does nothing when {@code overrideQuality} is turned off in the config.
+     */
+    public BoxLootTable applyItemQuality() {
+        for (Pool pool : this.pools) {
+            for (Entry entry : pool.entries()) {
+                entry.setQuality(ItemQuality.effective(entry.item(), entry.quality()));
+            }
+        }
+        return this;
+    }
+
     /** Total number of pools, the {@code k} of the {@code k / 4} stack size multiplier. */
     public int poolCount() {
         return this.pools.size();

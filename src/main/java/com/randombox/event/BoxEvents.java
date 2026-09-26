@@ -7,6 +7,7 @@ import com.randombox.config.RBConfig;
 import com.randombox.data.BoxData;
 import com.randombox.data.BoxSavedData;
 import com.randombox.loot.CustomLootStore;
+import com.randombox.loot.ItemQuality;
 import com.randombox.net.RBNetwork;
 import com.randombox.net.SyncBoxesPacket;
 
@@ -35,6 +36,7 @@ public class BoxEvents {
     public void onServerAboutToStart(ServerAboutToStartEvent event) {
         RBConfig.load(FMLPaths.CONFIGDIR.get());
         CustomLootStore.load(FMLPaths.CONFIGDIR.get());
+        ItemQuality.load(FMLPaths.CONFIGDIR.get());
     }
 
     @SubscribeEvent

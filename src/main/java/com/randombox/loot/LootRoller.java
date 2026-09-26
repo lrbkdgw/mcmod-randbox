@@ -56,10 +56,10 @@ public final class LootRoller {
         }
         BoxLootTable custom = CustomLootStore.get(tableId);
         if (custom != null && !custom.isEmpty()) {
-            return custom;
+            return custom.applyItemQuality();
         }
         LootTable vanilla = level.getServer().getLootData().getLootTable(tableId);
-        return LootExtractor.extract(tableId, vanilla, context);
+        return LootExtractor.extract(tableId, vanilla, context).applyItemQuality();
     }
 
     public static Result roll(ServerLevel level, BlockPos pos, Player player, ResourceLocation tableId, Rarity rarity) {

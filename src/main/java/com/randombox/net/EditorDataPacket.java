@@ -19,15 +19,27 @@ public class EditorDataPacket {
     private final List<ResourceLocation> available;
     /** Table the editor should select right away (freshly imported one), may be null. */
     private final ResourceLocation focus;
+    /** True when the quality column is controlled by the fixed item qualities. */
+    private final boolean qualityLocked;
 
     public EditorDataPacket(List<BoxLootTable> tables, List<ResourceLocation> available) {
-        this(tables, available, null);
+        this(tables, available, null, com.randombox.config.RBConfig.overrideQuality());
     }
 
     public EditorDataPacket(List<BoxLootTable> tables, List<ResourceLocation> available, ResourceLocation focus) {
+        this(tables, available, focus, com.randombox.config.RBConfig.overrideQuality());
+    }
+
+    public EditorDataPacket(List<BoxLootTable> tables, List<ResourceLocation> available,
+                            ResourceLocation focus, boolean qualityLocked) {
         this.tables = tables;
         this.available = available;
         this.focus = focus;
+        this.qualityLocked = qualityLocked;
+    }
+
+    public boolean qualityLocked() {
+        return this.qualityLocked;
     }
 
     public ResourceLocation focus() {
@@ -55,6 +67,7 @@ public class EditorDataPacket {
         if (packet.focus != null) {
             buf.writeResourceLocation(packet.focus);
         }
+        buf.writeBoolean(packet.qualityLocked);
     }
 
     public static EditorDataPacket decode(FriendlyByteBuf buf) {
@@ -69,7 +82,8 @@ public class EditorDataPacket {
             available.add(buf.readResourceLocation());
         }
         ResourceLocation focus = buf.readBoolean() ? buf.readResourceLocation() : null;
-        return new EditorDataPacket(tables, available, focus);
+        boolean qualityLocked = buf.readBoolean();
+        return new EditorDataPacket(tables, available, focus, qualityLocked);
     }
 
     public static void handle(EditorDataPacket packet, Supplier<NetworkEvent.Context> context) {

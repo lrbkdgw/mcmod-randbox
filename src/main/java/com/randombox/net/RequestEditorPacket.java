@@ -70,6 +70,9 @@ public class RequestEditorPacket {
                 }
                 tables.add(imported);
             }
+            for (BoxLootTable table : tables) {
+                table.applyItemQuality();
+            }
             RBNetwork.toPlayer(player, new EditorDataPacket(tables, available, focus));
         });
         ctx.setPacketHandled(true);

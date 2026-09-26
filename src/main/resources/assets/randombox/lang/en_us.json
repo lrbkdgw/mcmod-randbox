@@ -22,6 +22,7 @@
   "randombox.editor.delete": "Delete",
   "randombox.editor.rolls": "Rolls",
   "randombox.editor.header": "item / weight / quality / min / max",
+  "randombox.editor.header_locked": "item / weight / quality (fixed) / min / max",
   "randombox.editor.hint": "Select a table on the left, or create / import one.",
   "randombox.editor.available": "%s tables listed",
   "randombox.editor.search": "Search",
@@ -35,6 +36,9 @@
   "randombox.editor.saved": "Loot table %s saved.",
   "randombox.editor.deleted": "Loot table %s deleted.",
 
+  "randombox.command.unknown_item": "Unknown item.",
+  "randombox.command.quality_get": "Quality of %s: %s",
+  "randombox.command.quality_set": "Quality of %s set to %s",
   "randombox.command.created": "Box created at %s (%s) with loot table %s",
   "randombox.command.failed": "Could not create the box at this position.",
   "randombox.command.player_only": "This command can only be used by a player."

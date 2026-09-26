@@ -32,6 +32,8 @@ public final class RBConfig {
     private static float timeSpread = 0.5F;
     /** Multiply stack sizes by {@code poolCount / 4}. */
     private static boolean scaleStackSizes = true;
+    /** Overwrite the quality of every loot entry with the fixed quality of its item. */
+    private static boolean overrideQuality = true;
     /** Radius in which clients are told about unopened boxes (particles / beams). */
     private static int effectRadius = 32;
     /** Radius in which an unopened box shows its light beam. */
@@ -52,6 +54,7 @@ public final class RBConfig {
                     secondsPerItem = readFloat(json, "secondsPerItem", secondsPerItem);
                     timeSpread = readFloat(json, "timeSpread", timeSpread);
                     scaleStackSizes = json.has("scaleStackSizes") ? json.get("scaleStackSizes").getAsBoolean() : scaleStackSizes;
+                    overrideQuality = json.has("overrideQuality") ? json.get("overrideQuality").getAsBoolean() : overrideQuality;
                     effectRadius = json.has("effectRadius") ? json.get("effectRadius").getAsInt() : effectRadius;
                     beamRadius = json.has("beamRadius") ? json.get("beamRadius").getAsInt() : beamRadius;
                 }
@@ -72,6 +75,7 @@ public final class RBConfig {
             json.addProperty("secondsPerItem", secondsPerItem);
             json.addProperty("timeSpread", timeSpread);
             json.addProperty("scaleStackSizes", scaleStackSizes);
+            json.addProperty("overrideQuality", overrideQuality);
             json.addProperty("effectRadius", effectRadius);
             json.addProperty("beamRadius", beamRadius);
             try (Writer writer = Files.newBufferedWriter(file, StandardCharsets.UTF_8)) {
@@ -142,6 +146,10 @@ public final class RBConfig {
 
     public static boolean scaleStackSizes() {
         return scaleStackSizes;
+    }
+
+    public static boolean overrideQuality() {
+        return overrideQuality;
     }
 
     public static int effectRadius() {
