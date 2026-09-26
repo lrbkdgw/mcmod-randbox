@@ -1,0 +1,44 @@
+name: Build RandomBox
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Gradle 8.5
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.5'
+      - name: Check runner toolchain
+        run: java -version && gradle --version
+      - name: Build mod
+        id: build
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          gradle --no-daemon build --stacktrace 2>&1 | tee build.log
+      - name: Publish compiler diagnostics
+        if: always()
+        run: |
+          echo "### Gradle output" >> "$GITHUB_STEP_SUMMARY"
+          tail -80 build.log >> "$GITHUB_STEP_SUMMARY"
+          grep -E "FAILURE|What went wrong|error:|Could not|Exception|Plugin|Task :|method|property|Unsupported|Unable|Caused by|Failed" build.log | head -80 | while IFS= read -r line; do echo "::error::$line"; done
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+      - name: Upload mod jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: randombox-mod
+          path: build/libs/*.jar
+          if-no-files-found: error
