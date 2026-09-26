@@ -7,13 +7,14 @@
 
   "randombox.screen.reel": "宝箱抽奖",
   "randombox.screen.title": "%s 宝箱",
-  "randombox.screen.no_skip": "抽奖过程不可跳过",
+  "randombox.screen.no_skip": "抽奖过程不可跳过，ESC 取消本次抽奖",
+  "randombox.screen.creative_skip": "创造模式：空格跳过抽奖，ESC 取消",
   "randombox.screen.editor": "战利品表编辑器",
 
   "randombox.message.busy": "这个宝箱正在被开启。",
   "randombox.message.result": "%s 宝箱已开启：%s 件物品",
 
-  "randombox.message.broken": "挖掉了 %s 宝箱：掉落 %s 件物品",
+  "randombox.message.cancelled": "已取消抽奖，宝箱保持未开启",
 
   "randombox.editor.tables": "战利品表",
   "randombox.editor.new_id": "新战利品表 ID",

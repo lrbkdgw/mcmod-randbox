@@ -2,26 +2,20 @@ package com.randombox.event;
 
 import java.util.List;
 
-import com.randombox.Rarity;
 import com.randombox.command.RandomBoxCommand;
 import com.randombox.config.RBConfig;
 import com.randombox.data.BoxData;
 import com.randombox.data.BoxSavedData;
 import com.randombox.loot.CustomLootStore;
 import com.randombox.loot.ItemQuality;
-import com.randombox.loot.LootRoller;
 import com.randombox.net.RBNetwork;
 import com.randombox.net.SyncBoxesPacket;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.world.level.chunk.LevelChunk;
@@ -93,7 +87,10 @@ public class BoxEvents {
         }
     }
 
-    /** A broken box hands out its loot and must not keep glowing. */
+    /**
+     * A broken box must not keep glowing. Its (never rolled) loot is intentionally lost, exactly
+     * like a vanilla loot chest that is mined before it was opened.
+     */
     @SubscribeEvent
     public void onBlockBreak(BlockEvent.BreakEvent event) {
         if (event.isCanceled() || !(event.getLevel() instanceof ServerLevel level)) {
@@ -101,45 +98,12 @@ public class BoxEvents {
         }
         BoxSavedData saved = BoxSavedData.get(level);
         BlockPos pos = event.getPos();
-        dropUnopenedLoot(level, pos, event.getPlayer(), saved);
         saved.remove(pos);
         for (BlockPos neighbour : new BlockPos[] {pos.north(), pos.south(), pos.east(), pos.west()}) {
             BoxData data = saved.get(neighbour);
             if (data != null && !(level.getBlockEntity(neighbour) instanceof RandomizableContainerBlockEntity)) {
                 saved.remove(neighbour);
             }
-        }
-    }
-
-    /**
-     * Mining a loot chest that was never opened would simply void its (not yet rolled) loot.
-     * Instead the lottery is rolled silently and the prizes pop out of the broken block.
-     */
-    private void dropUnopenedLoot(ServerLevel level, BlockPos pos, Player player, BoxSavedData saved) {
-        if (player != null && player.isCreative()) {
-            return;
-        }
-        if (!(level.getBlockEntity(pos) instanceof RandomizableContainerBlockEntity container)) {
-            return;
-        }
-        ResourceLocation tableId = ReelManager.lootTableOf(container);
-        if (tableId == null) {
-            return;
-        }
-        BoxData data = saved.get(pos);
-        Rarity rarity = data != null ? data.rarity() : Rarity.random(level.getRandom());
-        LootRoller.Result rolled = LootRoller.roll(level, pos, player, tableId, rarity);
-        container.setLootTable(null, 0L);
-        container.setChanged();
-        for (ItemStack prize : rolled.prizes) {
-            if (!prize.isEmpty()) {
-                Block.popResource(level, pos, prize.copy());
-            }
-        }
-        if (player instanceof ServerPlayer serverPlayer && !rolled.prizes.isEmpty()) {
-            serverPlayer.sendSystemMessage(Component.translatable("randombox.message.broken",
-                    Component.translatable(rarity.translationKey()).withStyle(rarity.format()),
-                    rolled.prizes.size()));
         }
     }
 

@@ -34,6 +34,12 @@ public final class RBConfig {
     private static boolean scaleStackSizes = true;
     /** Overwrite the quality of every loot entry with the fixed quality of its item. */
     private static boolean overrideQuality = true;
+    /**
+     * How a pool is weighted when the item of a draw is picked:
+     * {@code items} = average amount of items of the pool (rolls * average stack size),
+     * {@code rolls} = average number of rolls only.
+     */
+    private static String poolWeightMode = "items";
     /** Radius in which clients are told about unopened boxes (particles / beams). */
     private static int effectRadius = 32;
     /** Radius in which an unopened box shows its light beam. */
@@ -55,6 +61,7 @@ public final class RBConfig {
                     timeSpread = readFloat(json, "timeSpread", timeSpread);
                     scaleStackSizes = json.has("scaleStackSizes") ? json.get("scaleStackSizes").getAsBoolean() : scaleStackSizes;
                     overrideQuality = json.has("overrideQuality") ? json.get("overrideQuality").getAsBoolean() : overrideQuality;
+                    poolWeightMode = json.has("poolWeightMode") ? json.get("poolWeightMode").getAsString() : poolWeightMode;
                     effectRadius = json.has("effectRadius") ? json.get("effectRadius").getAsInt() : effectRadius;
                     beamRadius = json.has("beamRadius") ? json.get("beamRadius").getAsInt() : beamRadius;
                 }
@@ -76,6 +83,7 @@ public final class RBConfig {
             json.addProperty("timeSpread", timeSpread);
             json.addProperty("scaleStackSizes", scaleStackSizes);
             json.addProperty("overrideQuality", overrideQuality);
+            json.addProperty("poolWeightMode", poolWeightMode);
             json.addProperty("effectRadius", effectRadius);
             json.addProperty("beamRadius", beamRadius);
             try (Writer writer = Files.newBufferedWriter(file, StandardCharsets.UTF_8)) {
@@ -150,6 +158,11 @@ public final class RBConfig {
 
     public static boolean overrideQuality() {
         return overrideQuality;
+    }
+
+    /** True while pools are weighted by their average item amount instead of their rolls. */
+    public static boolean poolWeightUsesStackSize() {
+        return !"rolls".equalsIgnoreCase(poolWeightMode);
     }
 
     public static int effectRadius() {

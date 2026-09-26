@@ -7,13 +7,14 @@
 
   "randombox.screen.reel": "Box Lottery",
   "randombox.screen.title": "%s Box",
-  "randombox.screen.no_skip": "The draw cannot be skipped",
+  "randombox.screen.no_skip": "The draw cannot be skipped - Esc cancels it",
+  "randombox.screen.creative_skip": "Creative: press Space to skip, Esc to cancel",
   "randombox.screen.editor": "Loot Table Editor",
 
   "randombox.message.busy": "This box is already being opened.",
   "randombox.message.result": "%s box opened: %s items",
 
-  "randombox.message.broken": "Broken %s box: %s items dropped",
+  "randombox.message.cancelled": "Draw cancelled - the box stays closed",
 
   "randombox.editor.tables": "Loot tables",
   "randombox.editor.new_id": "New table id",

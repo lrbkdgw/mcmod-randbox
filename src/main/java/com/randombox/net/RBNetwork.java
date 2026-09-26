@@ -28,6 +28,8 @@ public final class RBNetwork {
                 StartReelPacket::handle);
         CHANNEL.registerMessage(id++, ReelFinishedPacket.class, ReelFinishedPacket::encode, ReelFinishedPacket::decode,
                 ReelFinishedPacket::handle);
+        CHANNEL.registerMessage(id++, CancelReelPacket.class, CancelReelPacket::encode, CancelReelPacket::decode,
+                CancelReelPacket::handle);
         CHANNEL.registerMessage(id++, SyncBoxesPacket.class, SyncBoxesPacket::encode, SyncBoxesPacket::decode,
                 SyncBoxesPacket::handle);
         CHANNEL.registerMessage(id++, RequestEditorPacket.class, RequestEditorPacket::encode, RequestEditorPacket::decode,

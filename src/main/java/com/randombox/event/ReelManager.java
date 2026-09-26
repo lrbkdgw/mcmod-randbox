@@ -116,6 +116,19 @@ public final class ReelManager {
         apply(player, pending, true);
     }
 
+    /**
+     * The player aborted the lottery with Esc: throw the draw away. Nothing is handed out and the
+     * box stays untouched, so opening it again simply starts a new lottery.
+     */
+    public static void cancel(ServerPlayer player, BlockPos pos) {
+        Pending pending = PENDING.get(player.getUUID());
+        if (pending == null || !pending.pos.equals(pos)) {
+            return;
+        }
+        PENDING.remove(player.getUUID());
+        player.displayClientMessage(Component.translatable("randombox.message.cancelled"), true);
+    }
+
     private static void apply(ServerPlayer player, Pending pending, boolean openMenu) {
         ServerLevel level = player.serverLevel();
         List<RandomizableContainerBlockEntity> parts = parts(level, pending.pos);

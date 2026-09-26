@@ -131,19 +131,27 @@ public class BoxLootTable {
         }
 
         /**
-         * How many item slots this pool is expected to contribute, i.e. its average number of
-         * rolls. This is the weight used to pick the pool of a drawn item, so a table with
-         * {@code rolls} 3 / 5 / 0.5 hands out items in exactly that ratio.
+         * Average amount of items this pool hands out: {@code rolls * average stack size} of its
+         * entries. It is the weight used to pick the pool a drawn item comes from.
          *
-         * <p>The stack <em>size</em> deliberately does not matter here: weighting a pool by the
-         * amount of items in a stack made pools of cheap bulk material (gold ingots, blocks)
-         * swallow almost every draw.
+         * <p>With {@code poolWeightMode = "rolls"} in the config only the average number of rolls
+         * is used, which keeps pools of cheap bulk material (gold ingots, blocks) from swallowing
+         * most of the draws.
          */
         public float expectedItems() {
             if (this.entries.isEmpty()) {
                 return 0.0F;
             }
-            return Math.max(0.0F, this.averageRolls);
+            float rolls = Math.max(0.0F, this.averageRolls);
+            if (!com.randombox.config.RBConfig.poolWeightUsesStackSize()) {
+                return rolls;
+            }
+            float avgStack = 0.0F;
+            for (Entry entry : this.entries) {
+                avgStack += (entry.minCount() + entry.maxCount()) * 0.5F;
+            }
+            avgStack /= this.entries.size();
+            return rolls * Math.max(1.0F, avgStack);
         }
 
         public void write(FriendlyByteBuf buf) {

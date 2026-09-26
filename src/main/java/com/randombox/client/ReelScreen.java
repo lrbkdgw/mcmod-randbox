@@ -2,7 +2,10 @@ package com.randombox.client;
 
 import java.util.List;
 
+import org.lwjgl.glfw.GLFW;
+
 import com.randombox.Rarity;
+import com.randombox.net.CancelReelPacket;
 import com.randombox.net.RBNetwork;
 import com.randombox.net.ReelFinishedPacket;
 
@@ -37,6 +40,7 @@ public class ReelScreen extends Screen {
 
     private long startMillis;
     private boolean finished;
+    private boolean cancelled;
 
     public ReelScreen(BlockPos pos, Rarity rarity, List<List<ItemStack>> reels, List<Float> durations,
                       List<Integer> prizeIndices) {
@@ -81,10 +85,10 @@ public class ReelScreen extends Screen {
     public void removed() {
         // Esc, the inventory key, a server side screen change - whatever closed us, the lottery
         // cannot be skipped, so the screen puts itself back in front of the player.
-        if (!this.finished && active == this) {
+        if (!this.finished && !this.cancelled && active == this) {
             Minecraft minecraft = Minecraft.getInstance();
             minecraft.execute(() -> {
-                if (active == this && !this.finished) {
+                if (active == this && !this.finished && !this.cancelled) {
                     minecraft.setScreen(this);
                 }
             });
@@ -106,9 +110,25 @@ public class ReelScreen extends Screen {
         return false;
     }
 
+    /** Only creative mode may skip the animation. */
+    private boolean canSkip() {
+        return this.minecraft != null && this.minecraft.player != null
+                && this.minecraft.player.isCreative();
+    }
+
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        // Nothing can skip the lottery - not Esc, not Space, not the inventory key.
+        if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+            // Esc aborts the whole draw: no prizes, the box stays closed.
+            this.cancel();
+            return true;
+        }
+        if (keyCode == GLFW.GLFW_KEY_SPACE && this.canSkip()) {
+            // Creative mode is allowed to jump straight to the result.
+            this.skip();
+            return true;
+        }
+        // In survival nothing else can skip the lottery.
         return true;
     }
 
@@ -134,8 +154,34 @@ public class ReelScreen extends Screen {
 
     @Override
     public void onClose() {
-        if (this.finished) {
+        if (this.finished || this.cancelled) {
             super.onClose();
+        }
+    }
+
+    /** Esc: tell the server to drop the pending draw and leave the screen. */
+    private void cancel() {
+        if (this.finished || this.cancelled) {
+            return;
+        }
+        this.cancelled = true;
+        active = null;
+        RBNetwork.toServer(new CancelReelPacket(this.pos));
+        if (this.minecraft != null) {
+            this.minecraft.setScreen(null);
+        }
+    }
+
+    /** Creative skip: stop the animation and let the server hand out the (already fixed) prizes. */
+    private void skip() {
+        if (this.finished || this.cancelled) {
+            return;
+        }
+        this.finished = true;
+        active = null;
+        RBNetwork.toServer(new ReelFinishedPacket(this.pos));
+        if (this.minecraft != null) {
+            this.minecraft.setScreen(null);
         }
     }
 
@@ -207,8 +253,10 @@ public class ReelScreen extends Screen {
         Component title = Component.translatable("randombox.screen.title",
                 Component.translatable(this.rarity.translationKey()).withStyle(this.rarity.format()));
         graphics.drawCenteredString(this.font, title, this.width / 2, 20, 0xFFFFFF);
-        graphics.drawCenteredString(this.font, Component.translatable("randombox.screen.no_skip"),
-                this.width / 2, this.height - 22, 0xA0A0A0);
+        Component hint = this.canSkip()
+                ? Component.translatable("randombox.screen.creative_skip")
+                : Component.translatable("randombox.screen.no_skip");
+        graphics.drawCenteredString(this.font, hint, this.width / 2, this.height - 22, 0xA0A0A0);
 
         super.render(graphics, mouseX, mouseY, partialTick);
     }
