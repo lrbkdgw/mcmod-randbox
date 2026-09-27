@@ -52,6 +52,15 @@ public class BoxLootTable {
         return true;
     }
 
+    /** Deep copy used before runtime-only special loot is injected. */
+    public BoxLootTable copy() {
+        BoxLootTable copy = new BoxLootTable(this.id);
+        for (Pool pool : this.pools) {
+            copy.pools.add(pool.copy());
+        }
+        return copy;
+    }
+
     /**
      * Writes the fixed quality of every item into the matching entry (see {@link ItemQuality}).
      * Does nothing when {@code overrideQuality} is turned off in the config.
@@ -130,6 +139,15 @@ public class BoxLootTable {
             return entry;
         }
 
+        public Pool copy() {
+            Pool copy = new Pool();
+            copy.averageRolls = this.averageRolls;
+            for (Entry entry : this.entries) {
+                copy.entries.add(entry.copy());
+            }
+            return copy;
+        }
+
         /**
          * Weight of this pool when the pool of a drawn item is picked: the average number of
          * <em>rolls</em> the vanilla pool performs, i.e. how many draws the pool contributes to
@@ -199,6 +217,7 @@ public class BoxLootTable {
     public static class Entry {
         private Item item;
         private int weight = 1;
+        private float weightMultiplier = 1.0F;
         private int quality = 0;
         private int minCount = 1;
         private int maxCount = 1;
@@ -223,6 +242,14 @@ public class BoxLootTable {
 
         public void setWeight(int weight) {
             this.weight = Math.max(0, weight);
+        }
+
+        public float weightMultiplier() {
+            return this.weightMultiplier;
+        }
+
+        public void setWeightMultiplier(float multiplier) {
+            this.weightMultiplier = Math.max(0.0F, multiplier);
         }
 
         public int quality() {
@@ -257,12 +284,23 @@ public class BoxLootTable {
             this.vanillaFunctions = functions;
         }
 
+        public Entry copy() {
+            Entry copy = new Entry(this.item);
+            copy.weight = this.weight;
+            copy.weightMultiplier = this.weightMultiplier;
+            copy.quality = this.quality;
+            copy.minCount = this.minCount;
+            copy.maxCount = this.maxCount;
+            copy.vanillaFunctions = this.vanillaFunctions;
+            return copy;
+        }
+
         /**
          * Final weight of this entry: {@code baseWeight * (1 + quality * factor)} where the factor
          * comes from the rarity of the box.
          */
         public float adjustedWeight(float qualityFactor) {
-            float weight = this.weight * (1.0F + this.quality * qualityFactor);
+            float weight = this.weight * this.weightMultiplier * (1.0F + this.quality * qualityFactor);
             return Math.max(0.0F, weight);
         }
 

@@ -5,6 +5,7 @@ import java.util.Map;
 
 import com.randombox.Rarity;
 import com.randombox.net.EditorDataPacket;
+import com.randombox.net.PreviewLootPacket;
 import com.randombox.net.StartReelPacket;
 import com.randombox.net.SyncBoxesPacket;
 
@@ -33,5 +34,10 @@ public final class ClientPacketHandler {
     public static void handleEditorData(EditorDataPacket packet) {
         Minecraft minecraft = Minecraft.getInstance();
         minecraft.setScreen(new LootEditorScreen(packet.tables(), packet.available(), packet.focus(), packet.qualityLocked()));
+    }
+
+    public static void handlePreviewLoot(PreviewLootPacket packet) {
+        Minecraft minecraft = Minecraft.getInstance();
+        minecraft.setScreen(new PreviewLootScreen(packet.pos(), packet.rarity(), packet.prizes(), packet.rerollAvailable()));
     }
 }

@@ -38,6 +38,10 @@ public final class RBNetwork {
                 EditorDataPacket::handle);
         CHANNEL.registerMessage(id++, SaveTablePacket.class, SaveTablePacket::encode, SaveTablePacket::decode,
                 SaveTablePacket::handle);
+        CHANNEL.registerMessage(id++, PreviewLootPacket.class, PreviewLootPacket::encode, PreviewLootPacket::decode,
+                PreviewLootPacket::handle);
+        CHANNEL.registerMessage(id++, PreviewChoicePacket.class, PreviewChoicePacket::encode, PreviewChoicePacket::decode,
+                PreviewChoicePacket::handle);
     }
 
     public static void toPlayer(ServerPlayer player, Object packet) {

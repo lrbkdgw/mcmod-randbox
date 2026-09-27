@@ -6,6 +6,9 @@ import com.randombox.command.RandomBoxCommand;
 import com.randombox.config.RBConfig;
 import com.randombox.data.BoxData;
 import com.randombox.data.BoxSavedData;
+import com.randombox.enchantment.RandomBoxEnchantments;
+import com.randombox.item.RandomBoxItems;
+import com.randombox.item.WardenTentacleItem;
 import com.randombox.loot.CustomLootStore;
 import com.randombox.loot.ItemQuality;
 import com.randombox.net.RBNetwork;
@@ -16,6 +19,10 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.monster.warden.Warden;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.world.level.chunk.LevelChunk;
@@ -23,6 +30,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.living.LivingDropsEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.event.level.ChunkEvent;
@@ -45,6 +53,23 @@ public class BoxEvents {
         RandomBoxCommand.register(event.getDispatcher());
     }
 
+    /** Warden Tentacle: 10% from a player-killed Warden, +2% per Looting level. */
+    @SubscribeEvent
+    public void onLivingDrops(LivingDropsEvent event) {
+        if (!(event.getEntity() instanceof Warden warden)) {
+            return;
+        }
+        if (!(event.getSource().getEntity() instanceof Player)) {
+            return;
+        }
+        float chance = 0.10F + 0.02F * Math.max(0, event.getLootingLevel());
+        if (warden.getRandom().nextFloat() >= chance) {
+            return;
+        }
+        ItemStack stack = new ItemStack(RandomBoxItems.WARDEN_TENTACLE.get());
+        event.getDrops().add(new ItemEntity(warden.level(), warden.getX(), warden.getY(), warden.getZ(), stack));
+    }
+
     /** First opening of a loot chest becomes the lottery. */
     @SubscribeEvent
     public void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
@@ -57,6 +82,11 @@ public class BoxEvents {
         BlockPos pos = event.getPos();
         BlockEntity blockEntity = event.getLevel().getBlockEntity(pos);
         if (!(blockEntity instanceof RandomizableContainerBlockEntity)) {
+            return;
+        }
+        if (WardenTentacleItem.tryPreview(player, pos, event.getHand())) {
+            event.setCanceled(true);
+            event.setCancellationResult(InteractionResult.SUCCESS);
             return;
         }
         if (!ReelManager.hasLootTable(player.serverLevel(), pos)) {
@@ -98,6 +128,17 @@ public class BoxEvents {
         }
         BoxSavedData saved = BoxSavedData.get(level);
         BlockPos pos = event.getPos();
+        ReelManager.cancelForBrokenBox(level, pos);
+        for (RandomizableContainerBlockEntity part : ReelManager.parts(level, pos)) {
+            if (ReelManager.lootTableOf(part) != null) {
+                // Prevent vanilla from unpacking and dropping the still-unrolled loot table while
+                // the chest block is being destroyed.
+                part.setLootTable(null, 0L);
+                part.clearContent();
+                part.setChanged();
+            }
+            saved.remove(part.getBlockPos());
+        }
         saved.remove(pos);
         for (BlockPos neighbour : new BlockPos[] {pos.north(), pos.south(), pos.east(), pos.west()}) {
             BoxData data = saved.get(neighbour);
@@ -140,7 +181,9 @@ public class BoxEvents {
         this.syncCounter = 0;
         for (ServerPlayer player : event.getServer().getPlayerList().getPlayers()) {
             ServerLevel level = player.serverLevel();
-            List<BoxData> boxes = BoxSavedData.get(level).near(player.blockPosition(), RBConfig.effectRadius());
+            int radius = Math.max(RBConfig.effectRadius(),
+                    RandomBoxEnchantments.effectiveBeamRadius(player, RBConfig.beamRadius()));
+            List<BoxData> boxes = BoxSavedData.get(level).near(player.blockPosition(), radius);
             this.forgetMissingBoxes(level, boxes);
             RBNetwork.toPlayer(player, SyncBoxesPacket.of(boxes));
         }
